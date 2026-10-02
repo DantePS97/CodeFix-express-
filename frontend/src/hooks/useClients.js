@@ -10,19 +10,23 @@ export const useClients = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const cargarClientes = useCallback(async (filtros = {}) => {
+  const cargarClientes = useCallback(
+  async (filtros = {}) => {
     try {
       setLoading(true);
-      setError(null);
 
-      const data = await listarClientes(filtros);
+      const data =
+        await listarClientes(filtros);
+
       setClientes(data);
-    } catch (err) {
-      setError(err);
+    } catch (error) {
+      setError(error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  },
+  []
+);
 
   const crear = async (datos) => {
     await crearCliente(datos);
@@ -34,6 +38,8 @@ export const useClients = () => {
     await cargarClientes();
   };
 
+  
+
   useEffect(() => {
     cargarClientes();
   }, [cargarClientes]);
@@ -42,7 +48,7 @@ export const useClients = () => {
     clientes,
     loading,
     error,
-    cargarClientes,
+    recargar: cargarClientes,
     crear,
     actualizar,
   };
