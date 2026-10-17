@@ -107,3 +107,75 @@ export async function anular(tenantId, facturaId, motivo) {
     return facturaAnulada;
   });
 }
+export async function listar(tenantId, filtros = {}) {
+  const { clienteId, estado, desde, hasta } = filtros;
+
+  const condiciones = [{ tenantId }];
+
+  // Filtrar por cliente
+  if (clienteId !== undefined && clienteId !== "") {
+    const id = Number(clienteId);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new Error("El clienteId debe ser un entero positivo.");
+    }
+
+    condiciones.push({ clienteId: id });
+  }
+
+  // Filtrar por estado
+  if (estado !== undefined && estado !== "") {
+    if (!["EMITIDA", "ANULADA"].includes(estado)) {
+      throw new Error("El estado de la factura no es válido.");
+    }
+
+    condiciones.push({ estado });
+  }
+
+  // Filtrar desde una fecha
+  if (desde) {
+    const fechaDesde = new Date(`${desde}T00:00:00.000`);
+
+    if (Number.isNaN(fechaDesde.getTime())) {
+      throw new Error("La fecha desde no es válida.");
+    }
+
+    condiciones.push({
+      creadoEn: {
+        gte: fechaDesde,
+      },
+    });
+  }
+
+  // Filtrar hasta una fecha, incluyendo todo ese día
+  if (hasta) {
+    const fechaHasta = new Date(`${hasta}T23:59:59.999`);
+
+    if (Number.isNaN(fechaHasta.getTime())) {
+      throw new Error("La fecha hasta no es válida.");
+    }
+
+    condiciones.push({
+      creadoEn: {
+        lte: fechaHasta,
+      },
+    });
+  }
+
+  return prisma.factura.findMany({
+    where: {
+      AND: condiciones,
+    },
+    include: {
+      cliente: true,
+      detalles: {
+        include: {
+          producto: true,
+        },
+      },
+    },
+    orderBy: {
+      numero: "desc",
+    },
+  });
+}
