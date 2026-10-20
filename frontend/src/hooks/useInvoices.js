@@ -3,7 +3,7 @@ import { listarFacturas, crearFactura as crearFacturaService } from "../services
 
 export const useInvoices = () => {
 	const [facturas, setFacturas] = useState([]);
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 
 	const cargarFacturas = useCallback(async (filtros = {}) => {
