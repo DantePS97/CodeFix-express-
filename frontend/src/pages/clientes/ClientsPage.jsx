@@ -11,10 +11,8 @@ import "./ClientsPage.css";
 
 const estadoInicial = {
   nombre: "",
-  documento: "",
-  telefono: "",
-  email: "",
-  direccion: "",
+  identificacion: "",
+  contacto: "",
 };
 
 const ClientsPage = () => {
@@ -28,10 +26,8 @@ const ClientsPage = () => {
     if (clienteActual) {
       setFormulario({
         nombre: clienteActual.nombre || "",
-        documento: clienteActual.documento || "",
-        telefono: clienteActual.telefono || "",
-        email: clienteActual.email || "",
-        direccion: clienteActual.direccion || "",
+        identificacion: clienteActual.identificacion || "",
+        contacto: clienteActual.contacto || "",
       });
     } else {
       setFormulario(estadoInicial);
@@ -87,19 +83,11 @@ const ClientsPage = () => {
     },
     {
       header: "Documento",
-      accessor: "documento",
+      accessor: "identificacion",
     },
     {
-      header: "Teléfono",
-      accessor: "telefono",
-    },
-    {
-      header: "Correo",
-      accessor: "email",
-    },
-    {
-      header: "Dirección",
-      accessor: "direccion",
+      header: "Contacto",
+      accessor: "contacto",
     },
     {
       header: "Acciones",
@@ -122,15 +110,36 @@ const ClientsPage = () => {
       </div>
 
       <Card>
-        <Table
-          columns={columnas}
-          data={clientes}
-          loading={loading}
-        />
+        {loading ? (
+          <p>Cargando...</p>
+        ) : (
+          <Table>
+            <thead>
+              <tr>
+                {columnas.map((columna) => (
+                  <th key={columna.header}>{columna.header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {clientes.map((cliente) => (
+                <tr key={cliente.id}>
+                  {columnas.map((columna) => (
+                    <td key={columna.header}>
+                      {columna.cell
+                        ? columna.cell(cliente)
+                        : cliente[columna.accessor]}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
       </Card>
 
       <Modal
-        isOpen={modalOpen}
+        open={modalOpen}
         onClose={cerrarModal}
         title={
           clienteActual
@@ -152,31 +161,15 @@ const ClientsPage = () => {
 
           <Input
             label="Documento"
-            name="documento"
-            value={formulario.documento}
-            onChange={handleChange}
-            required
-          />
-
-          <Input
-            label="Teléfono"
-            name="telefono"
-            value={formulario.telefono}
+            name="identificacion"
+            value={formulario.identificacion}
             onChange={handleChange}
           />
 
           <Input
-            label="Correo"
-            name="email"
-            type="email"
-            value={formulario.email}
-            onChange={handleChange}
-          />
-
-          <Input
-            label="Dirección"
-            name="direccion"
-            value={formulario.direccion}
+            label="Contacto"
+            name="contacto"
+            value={formulario.contacto}
             onChange={handleChange}
           />
 
