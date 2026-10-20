@@ -17,9 +17,16 @@ async function verificarCategoria(tenantId, categoriaId) {
 	}
 }
 
-export async function listar(tenantId, filtros = {}) {
+export async function listar(tenantId, { nombre, categoriaId } = {}) {
+	const where = { tenantId, activo: true };
+	if (nombre !== undefined) {
+		where.nombre = { contains: nombre };
+	}
+	if (categoriaId !== undefined) {
+		where.categoriaId = categoriaId;
+	}
 	return prisma.producto.findMany({
-		where: { ...filtros, tenantId, activo: true },
+		where,
 		orderBy: { nombre: "asc" },
 	});
 }

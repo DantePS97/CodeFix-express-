@@ -1,10 +1,12 @@
 import { validarCrearCliente, validarActualizarCliente } from "../validators/clientes.validator.js";
 import { listar as listarClientes, crear as crearCliente, actualizar as actualizarCliente } from "../services/clientes.service.js";
 import { NotFoundError, ValidationError } from "../utils/errors.js";
+import { leerTexto } from "../utils/query.js";
 
 export async function listar(req, res, next) {
 	try {
-		const clientes = await listarClientes(req.tenantId);
+		const nombre = leerTexto(req.query.nombre, "nombre");
+		const clientes = await listarClientes(req.tenantId, { nombre });
 		res.status(200).json({ clientes });
 	} catch (error) {
 		next(error);

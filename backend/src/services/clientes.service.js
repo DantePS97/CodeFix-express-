@@ -9,6 +9,9 @@ export async function listar(tenantId, filtros = {}) {
 	if (filtros.activo !== undefined) {
 		where.activo = filtros.activo;
 	}
+	if (filtros.nombre !== undefined) {
+		where.OR = [{ nombre: { contains: filtros.nombre } }, { identificacion: { contains: filtros.nombre } }];
+	}
 	return prisma.cliente.findMany({
 		where,
 		orderBy: { nombre: "asc" },
