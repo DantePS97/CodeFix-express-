@@ -1,21 +1,16 @@
-import api from "./api";
+import api from "../api/api.js";
 
-export const listarClientes = async (filtros = {}) => {
-  const response = await api.get("/clientes", {
-    params: filtros,
-  });
+export async function listarClientes(filtros = {}) {
+	const { data } = await api.get("/clientes", { params: filtros });
+	return data.clientes;
+}
 
-  return response.data;
-};
+export async function crearCliente(datos) {
+	const { data } = await api.post("/clientes", datos);
+	return data.cliente;
+}
 
-export const crearCliente = async (datos) => {
-  const response = await api.post("/clientes", datos);
-
-  return response.data;
-};
-
-export const actualizarCliente = async (id, cambios) => {
-  const response = await api.put(`/clientes/${id}`, cambios);
-
-  return response.data;
-};
+export async function actualizarCliente(id, cambios) {
+	const { data } = await api.patch(`/clientes/${id}`, cambios);
+	return data.cliente;
+}
