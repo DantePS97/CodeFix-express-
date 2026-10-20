@@ -8,27 +8,39 @@ import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Select from "../../components/Select/Select";
 
+import { aCentavos, calcularImpuestoCentavos, formatearCentavos, formatearDinero } from "../../utils/money";
+
 import "./NewInvoicesPage.css";
+
+/* El backend no expone Negocio.tarifaIvaDefault: la vista previa usa esta tarifa estimada */
+const TARIFA_IVA_ESTIMADA = 19;
 
 export default function NewInvoicesPage() {
 	const { crearFactura } = useInvoices();
 	const { clientes, loading: loadingClientes } = useClients();
-	const { productos, loading: loadingProductos } = useProducts();
+	const { productos, cargando: loadingProductos } = useProducts();
 
 	const [clienteId, setClienteId] = useState("");
 	const [productoId, setProductoId] = useState("");
 	const [cantidad, setCantidad] = useState(1);
 
 	const [carrito, setCarrito] = useState([]);
-	const [numeroFactura, setNumeroFactura] = useState(null);
+	const [facturaEmitida, setFacturaEmitida] = useState(null);
+	const [errorFactura, setErrorFactura] = useState("");
 	const [guardando, setGuardando] = useState(false);
+
+	/* El backend rechaza facturar a clientes inactivos */
+	const clientesActivos = useMemo(
+		() => clientes.filter((cliente) => cliente.activo),
+		[clientes]
+	);
 
 	/* Preselección del primer cliente */
 	useEffect(() => {
-		if (!clienteId && clientes.length > 0) {
-			setClienteId(String(clientes[0].id));
+		if (!clienteId && clientesActivos.length > 0) {
+			setClienteId(String(clientesActivos[0].id));
 		}
-	}, [clientes, clienteId]);
+	}, [clientesActivos, clienteId]);
 
 	/* Preselección del primer producto */
 	useEffect(() => {
@@ -37,7 +49,7 @@ export default function NewInvoicesPage() {
 		}
 	}, [productos, productoId]);
 
-	const opcionesClientes = clientes.map((cliente) => ({
+	const opcionesClientes = clientesActivos.map((cliente) => ({
 		value: String(cliente.id),
 		label: cliente.nombre,
 	}));
@@ -57,15 +69,32 @@ export default function NewInvoicesPage() {
 			return;
 		}
 
-		setCarrito((prev) => [
-			...prev,
-			{
-				productoId: productoSeleccionado.id,
-				nombre: productoSeleccionado.nombre,
-				cantidad: Number(cantidad),
-				precioUnitario: Number(productoSeleccionado.precio),
-			},
-		]);
+		setErrorFactura("");
+
+		/* El backend rechaza líneas con el mismo producto repetido */
+		setCarrito((prev) => {
+			const existente = prev.find(
+				(item) => item.productoId === productoSeleccionado.id
+			);
+
+			if (existente) {
+				return prev.map((item) =>
+					item === existente
+						? { ...item, cantidad: item.cantidad + Number(cantidad) }
+						: item
+				);
+			}
+
+			return [
+				...prev,
+				{
+					productoId: productoSeleccionado.id,
+					nombre: productoSeleccionado.nombre,
+					cantidad: Number(cantidad),
+					precioCentavos: aCentavos(productoSeleccionado.precio),
+				},
+			];
+		});
 
 		setCantidad(1);
 	};
@@ -80,20 +109,18 @@ export default function NewInvoicesPage() {
 		return carrito.reduce(
 			(acc, item) =>
 				acc +
-				item.cantidad * item.precioUnitario,
+				item.cantidad * item.precioCentavos,
 			0
 		);
 	}, [carrito]);
 
 	/* Valor informativo solamente */
 	const impuesto = useMemo(() => {
-		return subtotal * 0.19;
+		return calcularImpuestoCentavos(subtotal, TARIFA_IVA_ESTIMADA);
 	}, [subtotal]);
 
 	/* Valor informativo solamente */
-	const total = useMemo(() => {
-		return subtotal + impuesto;
-	}, [subtotal, impuesto]);
+	const total = subtotal + impuesto;
 
 	const confirmarFactura = async () => {
 		if (!clienteId || carrito.length === 0) {
@@ -102,6 +129,8 @@ export default function NewInvoicesPage() {
 
 		try {
 			setGuardando(true);
+			setErrorFactura("");
+			setFacturaEmitida(null);
 
 			const payload = {
 				clienteId: Number(clienteId),
@@ -111,18 +140,15 @@ export default function NewInvoicesPage() {
 				})),
 			};
 
-			const respuesta = await crearFactura(payload);
+			const factura = await crearFactura(payload);
 
-			setNumeroFactura(
-				respuesta?.numeroFactura ||
-				respuesta?.numero ||
-				respuesta?.factura?.numero
-			);
-
+			setFacturaEmitida(factura);
 			setCarrito([]);
 		} catch (error) {
-			console.error(error);
-			alert("Error al generar la factura");
+			setErrorFactura(
+				error.response?.data?.error?.mensaje ??
+				"No se pudo generar la factura."
+			);
 		} finally {
 			setGuardando(false);
 		}
@@ -196,15 +222,13 @@ export default function NewInvoicesPage() {
 								<td>{item.nombre}</td>
 								<td>{item.cantidad}</td>
 								<td>
-									$
-									{item.precioUnitario.toFixed(2)}
+									{formatearCentavos(item.precioCentavos)}
 								</td>
 								<td>
-									$
-									{(
+									{formatearCentavos(
 										item.cantidad *
-										item.precioUnitario
-									).toFixed(2)}
+										item.precioCentavos
+									)}
 								</td>
 								<td>
 									<Button
@@ -231,24 +255,32 @@ export default function NewInvoicesPage() {
 					<div>
 						<span>Subtotal:</span>
 						<strong>
-							${subtotal.toFixed(2)}
+							{formatearCentavos(subtotal)}
 						</strong>
 					</div>
 
 					<div>
-						<span>Impuesto (19%):</span>
+						<span>Impuesto (IVA estimado {TARIFA_IVA_ESTIMADA}%):</span>
 						<strong>
-							${impuesto.toFixed(2)}
+							{formatearCentavos(impuesto)}
 						</strong>
 					</div>
 
 					<div className="invoice-total">
-						<span>Total:</span>
+						<span>Total estimado:</span>
 						<strong>
-							${total.toFixed(2)}
+							{formatearCentavos(total)}
 						</strong>
 					</div>
 				</div>
+
+				<p className="text-muted invoice-note">
+					Valores estimados: el IVA y el total reales los calcula el servidor al confirmar la factura.
+				</p>
+
+				{errorFactura && (
+					<p className="form-error invoice-note">{errorFactura}</p>
+				)}
 
 				<Button
 					onClick={confirmarFactura}
@@ -261,13 +293,19 @@ export default function NewInvoicesPage() {
 						: "Confirmar factura"}
 				</Button>
 
-				{numeroFactura && (
+				{facturaEmitida && (
 					<div className="invoice-success">
 						Factura generada correctamente.
 						<br />
 						<strong>
-							Número: #{numeroFactura}
+							Número: #{facturaEmitida.numero}
 						</strong>
+						<br />
+						Subtotal: {formatearDinero(facturaEmitida.subtotal)}
+						<br />
+						IVA: {formatearDinero(facturaEmitida.impuesto)}
+						<br />
+						Total: {formatearDinero(facturaEmitida.total)}
 					</div>
 				)}
 			</Card>
