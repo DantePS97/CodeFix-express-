@@ -8,6 +8,8 @@ import DashboardPage from "../pages/dashboard/DashboardPage.jsx";
 import UsersPage from "../pages/usuarios/UsersPage.jsx";
 import ProductsPage from "../pages/productos/ProductsPage.jsx";
 import InventoryPage from "../pages/inventario/InventoryPage.jsx";
+import ClientsPage from "../pages/clientes/ClientsPage.jsx";
+import NewInvoicesPage from "../pages/facturas/NewInvoicesPage.jsx";
 
 function RutaPorDefecto() {
 	const { estaAutenticado } = useAuth();
@@ -32,6 +34,8 @@ export default function AppRoutes() {
 			<Route element={<ProtectedRoute rolesPermitidos={["ADMIN", "VENDEDOR"]} />}>
 				<Route element={<DashboardLayout />}>
 					<Route path="/inventario" element={<InventoryPage />} />
+					<Route path="/clientes" element={<ClientsPage />} />
+					<Route path="/facturas/nueva" element={<NewInvoicesPage />} />
 				</Route>
 			</Route>
 
@@ -46,16 +50,3 @@ export default function AppRoutes() {
 		</Routes>
 	);
 }
-
-import ClientsPage from "../pages/clientes/ClientsPage";
-<Route
-  path="/clientes"
-  element={
-    <ProtectedRoute
-      roles={["ADMIN", "VENDEDOR"]}
-    >
-      <ClientsPage />
-    </ProtectedRoute>
-  }
-/>
-import NewInvoicesPage from "../pages/facturas/NewInvoicesPage";
