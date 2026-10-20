@@ -8,6 +8,7 @@ import productosRoutes from "./routes/productos.routes.js";
 import inventarioRoutes from "./routes/inventario.routes.js";
 import clientesRoutes from "./routes/clientes.routes.js";
 import facturasRoutes from "./routes/facturas.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 
 const app = express();
@@ -29,6 +30,7 @@ app.use("/api/productos", productosRoutes);
 app.use("/api/inventario", inventarioRoutes);
 app.use("/api/clientes", clientesRoutes);
 app.use("/api/facturas", facturasRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // Debe ir al final: captura los errores que `next(err)` propaga desde
 // cualquier ruta o middleware anterior.
