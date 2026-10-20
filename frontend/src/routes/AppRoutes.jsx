@@ -46,3 +46,16 @@ export default function AppRoutes() {
 		</Routes>
 	);
 }
+
+import ClientsPage from "../pages/clientes/ClientsPage";
+<Route
+  path="/clientes"
+  element={
+    <ProtectedRoute
+      roles={["ADMIN", "VENDEDOR"]}
+    >
+      <ClientsPage />
+    </ProtectedRoute>
+  }
+/>
+import NewInvoicesPage from "../pages/facturas/NewInvoicesPage";
