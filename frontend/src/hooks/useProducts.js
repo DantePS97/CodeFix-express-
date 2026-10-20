@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	listarProductos,
 	crearProducto,
@@ -9,25 +9,33 @@ import {
 
 // Estado local por página, sin store global (DDS 6.2): cada mutación
 // refresca la lista consultando de nuevo al backend.
-export function useProducts() {
+export function useProducts({ nombre = "" } = {}) {
 	const [productos, setProductos] = useState([]);
 	const [categorias, setCategorias] = useState([]);
 	const [cargando, setCargando] = useState(true);
 	const [error, setError] = useState("");
+	const ultimaPeticion = useRef(0);
 
 	const refrescar = useCallback(async () => {
+		const peticion = ++ultimaPeticion.current;
 		setCargando(true);
 		setError("");
 		try {
-			const [listaProductos, listaCategorias] = await Promise.all([listarProductos(), listarCategorias()]);
+			const [listaProductos, listaCategorias] = await Promise.all([
+				listarProductos(nombre ? { nombre } : {}),
+				listarCategorias(),
+			]);
+			// Una búsqueda más nueva ya está en vuelo: esta respuesta quedó vieja.
+			if (peticion !== ultimaPeticion.current) return;
 			setProductos(listaProductos);
 			setCategorias(listaCategorias);
 		} catch (err) {
+			if (peticion !== ultimaPeticion.current) return;
 			setError(err.response?.data?.error?.mensaje ?? "No se pudieron cargar los productos.");
 		} finally {
-			setCargando(false);
+			if (peticion === ultimaPeticion.current) setCargando(false);
 		}
-	}, []);
+	}, [nombre]);
 
 	useEffect(() => {
 		refrescar();

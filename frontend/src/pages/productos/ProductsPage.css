@@ -9,6 +9,11 @@
 	margin: 0;
 }
 
+.products-search {
+	max-width: 320px;
+	margin-bottom: var(--spacing-md);
+}
+
 .products-form {
 	display: flex;
 	flex-direction: column;

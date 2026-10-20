@@ -1,7 +1,7 @@
 import api from "../api/api.js";
 
-export async function listarProductos() {
-	const { data } = await api.get("/productos");
+export async function listarProductos(filtros = {}) {
+	const { data } = await api.get("/productos", { params: filtros });
 	return data.productos;
 }
 

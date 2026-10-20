@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useProducts } from "../../hooks/useProducts.js";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue.js";
 import Table from "../../components/Table/Table.jsx";
 import Badge from "../../components/Badge/Badge.jsx";
 import Modal from "../../components/Modal/Modal.jsx";
@@ -13,7 +14,9 @@ const CAMPOS_INICIALES = { nombre: "", codigo: "", precio: "", categoriaId: "", 
 
 export default function ProductsPage() {
 	const { usuario } = useAuth();
-	const { productos, categorias, cargando, error, crear, actualizar } = useProducts();
+	const [busqueda, setBusqueda] = useState("");
+	const nombre = useDebouncedValue(busqueda.trim(), 300);
+	const { productos, categorias, cargando, error, crear, actualizar } = useProducts({ nombre });
 	const [modalAbierto, setModalAbierto] = useState(false);
 	const [productoEditando, setProductoEditando] = useState(null);
 	const [form, setForm] = useState(CAMPOS_INICIALES);
@@ -89,10 +92,22 @@ export default function ProductsPage() {
 				{puedeEditar && <Button onClick={abrirCrear}>+ Nuevo producto</Button>}
 			</div>
 
+			<div className="products-search">
+				<Input
+					id="busquedaProductos"
+					label="Buscar"
+					placeholder="Nombre del producto"
+					value={busqueda}
+					onChange={(evento) => setBusqueda(evento.target.value)}
+				/>
+			</div>
+
 			{error && <p className="form-error">{error}</p>}
 
 			{cargando ? (
 				<p>Cargando...</p>
+			) : productos.length === 0 ? (
+				<p>{nombre ? "No se encontraron productos con esa búsqueda." : "No hay productos registrados."}</p>
 			) : (
 				<Table>
 					<thead>
