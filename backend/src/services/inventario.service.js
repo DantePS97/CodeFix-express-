@@ -45,9 +45,13 @@ export async function registrarMovimiento(tenantId, datos) {
 	});
 }
 
-export async function listarMovimientos(tenantId, filtros = {}) {
+export async function listarMovimientos(tenantId, { productoId } = {}) {
+	const where = { tenantId };
+	if (productoId !== undefined) {
+		where.productoId = productoId;
+	}
 	return prisma.movimientoInventario.findMany({
-		where: { tenantId, ...filtros },
+		where,
 		orderBy: { fechaMovimiento: "desc" },
 	});
 }

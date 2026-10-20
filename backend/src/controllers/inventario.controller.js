@@ -1,6 +1,7 @@
 import { validarMovimiento } from "../validators/inventario.validator.js";
 import { registrarMovimiento, listarMovimientos } from "../services/inventario.service.js";
 import { ValidationError, ForbiddenError } from "../utils/errors.js";
+import { leerEnteroPositivo } from "../utils/query.js";
 
 export async function registrar(req, res, next) {
 	try {
@@ -22,7 +23,8 @@ export async function registrar(req, res, next) {
 
 export async function listar(req, res, next) {
 	try {
-		const movimientos = await listarMovimientos(req.tenantId);
+		const productoId = leerEnteroPositivo(req.query.productoId, "productoId");
+		const movimientos = await listarMovimientos(req.tenantId, { productoId });
 		res.status(200).json({ movimientos });
 	} catch (error) {
 		next(error);
