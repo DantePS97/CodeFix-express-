@@ -7,6 +7,11 @@ import { ConflictError, NotFoundError, ValidationError } from "../utils/errors.j
 
 const MAX_INTENTOS_NUMERO = 5;
 
+const INCLUIR_DETALLE = {
+	cliente: true,
+	detalles: { include: { producto: { select: { id: true, nombre: true, codigo: true } } } },
+};
+
 // Ventas simultáneas calculan el mismo número: la restricción única deja pasar una y las demás reintentan.
 export async function crear(tenantId, usuarioId, datos) {
 	for (let intento = 1; ; intento++) {
@@ -125,32 +130,95 @@ async function emitir(tenantId, usuarioId, { clienteId, lineas }) {
 			})),
 		});
 
-		return tx.factura.findFirst({
-			where: { id: factura.id, tenantId },
-			include: {
-				cliente: true,
-				detalles: { include: { producto: { select: { id: true, nombre: true, codigo: true } } } },
-			},
-		});
+		return tx.factura.findFirst({ where: { id: factura.id, tenantId }, include: INCLUIR_DETALLE });
 	});
 }
 
-export async function listar(tenantId, filtros = {}) {
-	// Los filtros (fecha, cliente, estado) llegan en el Sprint 4.
+export async function listar(tenantId, { clienteId, estado, desde, hastaExclusivo } = {}) {
+	const where = { tenantId };
+	if (clienteId !== undefined) {
+		where.clienteId = clienteId;
+	}
+	if (estado !== undefined) {
+		where.estado = estado;
+	}
+	if (desde !== undefined || hastaExclusivo !== undefined) {
+		where.createdAt = {
+			...(desde !== undefined ? { gte: desde } : {}),
+			...(hastaExclusivo !== undefined ? { lt: hastaExclusivo } : {}),
+		};
+	}
 	return prisma.factura.findMany({
-		where: { tenantId },
+		where,
 		orderBy: { numero: "desc" },
 		include: { cliente: true },
+	});
+}
+
+export async function resumenVentas(tenantId, desde, hastaExclusivo) {
+	const { _sum, _count } = await prisma.factura.aggregate({
+		where: { tenantId, estado: "EMITIDA", createdAt: { gte: desde, lt: hastaExclusivo } },
+		_sum: { total: true },
+		_count: { _all: true },
+	});
+	return {
+		ventasPeriodo: _sum.total ?? new Prisma.Decimal(0),
+		facturasEmitidas: _count._all,
+	};
+}
+
+export async function anular(tenantId, facturaId, motivo) {
+	return prisma.$transaction(async (tx) => {
+		// Transición atómica: solo una de dos anulaciones simultáneas ve count 1.
+		const { count } = await tx.factura.updateMany({
+			where: { id: facturaId, tenantId, estado: "EMITIDA" },
+			data: { estado: "ANULADA", motivoAnulacion: motivo },
+		});
+		if (count === 0) {
+			const existente = await tx.factura.findFirst({ where: { id: facturaId, tenantId }, select: { id: true } });
+			if (!existente) {
+				throw new NotFoundError("Factura no encontrada.");
+			}
+			throw new ConflictError("La factura ya está anulada.", "TRANSICION_INVALIDA");
+		}
+
+		const { numero, detalles } = await tx.factura.findFirst({
+			where: { id: facturaId, tenantId },
+			select: { numero: true, detalles: { orderBy: { productoId: "asc" } } },
+		});
+
+		const movimientos = [];
+		for (const { productoId, cantidad } of detalles) {
+			// Se repone aunque el producto esté inactivo: el stock facturado debe volver.
+			await tx.producto.updateMany({
+				where: { id: productoId, tenantId },
+				data: { stock: { increment: cantidad } },
+			});
+			const { stock: stockNuevo } = await tx.producto.findFirst({
+				where: { id: productoId, tenantId },
+				select: { stock: true },
+			});
+			movimientos.push({
+				tenantId,
+				productoId,
+				tipo: "ENTRADA",
+				cantidad,
+				stockAnterior: stockNuevo - cantidad,
+				stockNuevo,
+				motivo: `Anulación - factura #${numero}`,
+				referenciaFacturaId: facturaId,
+			});
+		}
+		await tx.movimientoInventario.createMany({ data: movimientos });
+
+		return tx.factura.findFirst({ where: { id: facturaId, tenantId }, include: INCLUIR_DETALLE });
 	});
 }
 
 export async function obtenerPorId(tenantId, facturaId) {
 	const factura = await prisma.factura.findFirst({
 		where: { id: facturaId, tenantId },
-		include: {
-			cliente: true,
-			detalles: { include: { producto: { select: { id: true, nombre: true, codigo: true } } } },
-		},
+		include: INCLUIR_DETALLE,
 	});
 	if (!factura) {
 		throw new NotFoundError("Factura no encontrada.");
