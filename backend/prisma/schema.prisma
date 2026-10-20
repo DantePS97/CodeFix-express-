@@ -29,6 +29,8 @@ model Negocio {
   categorias  CategoriaProducto[]
   productos   Producto[]
   movimientos MovimientoInventario[]
+  clientes    Cliente[]
+  facturas    Factura[]
 }
 
 model Usuario {
@@ -41,7 +43,8 @@ model Usuario {
   activo         Boolean  @default(true)
   creadoEn       DateTime @default(now())
 
-  negocio Negocio @relation(fields: [tenantId], references: [id])
+  negocio  Negocio   @relation(fields: [tenantId], references: [id])
+  facturas Factura[]
 
   @@index([tenantId])
 }
@@ -98,6 +101,7 @@ model Producto {
   negocio         Negocio              @relation(fields: [tenantId], references: [id])
 
   movimientos     MovimientoInventario[]
+  detallesFactura DetalleFactura[]
 
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
@@ -129,6 +133,9 @@ model MovimientoInventario {
   motivo          String?          @db.VarChar(255)
   observaciones   String?          @db.Text
 
+  referenciaFacturaId Int?
+  factura             Factura?     @relation(fields: [referenciaFacturaId], references: [id])
+
   fechaMovimiento DateTime         @default(now())
 
   createdAt       DateTime         @default(now())
@@ -137,5 +144,84 @@ model MovimientoInventario {
   @@index([tenantId])
   @@index([productoId])
   @@index([fechaMovimiento])
+  @@index([referenciaFacturaId])
   @@map("movimientos_inventario")
+}
+
+/// =============================
+/// CLIENTES
+/// =============================
+
+model Cliente {
+  id             Int       @id @default(autoincrement())
+  tenantId       Int
+  nombre         String    @db.VarChar(150)
+  identificacion String?   @db.VarChar(30)
+  contacto       String?   @db.VarChar(120)
+  activo         Boolean   @default(true)
+
+  negocio        Negocio   @relation(fields: [tenantId], references: [id])
+  facturas       Factura[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@map("clientes")
+}
+
+/// =============================
+/// FACTURACIÓN
+/// =============================
+
+enum EstadoFactura {
+  EMITIDA
+  ANULADA
+}
+
+model Factura {
+  id               Int                    @id @default(autoincrement())
+  tenantId         Int
+  numero           Int
+  clienteId        Int
+  usuarioId        Int
+
+  subtotal         Decimal                @db.Decimal(12, 2)
+  impuesto         Decimal                @db.Decimal(12, 2)
+  total            Decimal                @db.Decimal(12, 2)
+
+  estado           EstadoFactura          @default(EMITIDA)
+  motivoAnulacion  String?                @db.VarChar(255)
+
+  negocio          Negocio                @relation(fields: [tenantId], references: [id])
+  cliente          Cliente                @relation(fields: [clienteId], references: [id])
+  usuario          Usuario                @relation(fields: [usuarioId], references: [id])
+  detalles         DetalleFactura[]
+  movimientos      MovimientoInventario[]
+
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@unique([tenantId, numero])
+  @@index([tenantId])
+  @@index([clienteId])
+  @@index([usuarioId])
+  @@map("facturas")
+}
+
+model DetalleFactura {
+  id             Int      @id @default(autoincrement())
+  facturaId      Int
+  productoId     Int
+
+  cantidad       Int
+  precioUnitario Decimal  @db.Decimal(12, 2)
+  subtotalLinea  Decimal  @db.Decimal(12, 2)
+
+  factura        Factura  @relation(fields: [facturaId], references: [id])
+  producto       Producto @relation(fields: [productoId], references: [id])
+
+  @@index([facturaId])
+  @@index([productoId])
+  @@map("detalles_factura")
 }
