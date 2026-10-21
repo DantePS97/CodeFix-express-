@@ -3,9 +3,17 @@ import cors from "cors";
 import negociosRoutes from "./routes/negocios.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import usuariosRoutes from "./routes/usuarios.routes.js";
+import categoriasRoutes from "./routes/categorias.routes.js";
+import productosRoutes from "./routes/productos.routes.js";
+import inventarioRoutes from "./routes/inventario.routes.js";
+import clientesRoutes from "./routes/clientes.routes.js";
+import facturasRoutes from "./routes/facturas.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 
 const app = express();
+
+app.disable("x-powered-by");
 
 app.use(cors());
 app.use(express.json());
@@ -19,6 +27,16 @@ app.get("/api", (req, res) => {
 app.use("/api/negocios", negociosRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/usuarios", usuariosRoutes);
+app.use("/api/categorias", categoriasRoutes);
+app.use("/api/productos", productosRoutes);
+app.use("/api/inventario", inventarioRoutes);
+app.use("/api/clientes", clientesRoutes);
+app.use("/api/facturas", facturasRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+
+app.use((req, res) => {
+	res.status(404).json({ error: { codigo: "RUTA_NO_ENCONTRADA", mensaje: "La ruta solicitada no existe." } });
+});
 
 // Debe ir al final: captura los errores que `next(err)` propaga desde
 // cualquier ruta o middleware anterior.

@@ -1,0 +1,6 @@
+.indicadores-resumen {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: var(--spacing-md);
+	margin: var(--spacing-lg) 0;
+}

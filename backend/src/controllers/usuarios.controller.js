@@ -1,6 +1,7 @@
 import { validarCrearUsuario, validarActualizarUsuario } from "../validators/usuarios.validator.js";
 import { listarUsuarios, crearUsuario, actualizarUsuario } from "../services/usuarios.service.js";
 import { ValidationError } from "../utils/errors.js";
+import { leerIdRuta } from "../utils/query.js";
 
 export async function listar(req, res, next) {
 	try {
@@ -30,7 +31,7 @@ export async function actualizar(req, res, next) {
 		if (errores.length > 0) {
 			throw new ValidationError(errores.join(" "));
 		}
-		const usuarioId = Number(req.params.id);
+		const usuarioId = leerIdRuta(req.params.id, "Usuario no encontrado.");
 		const usuario = await actualizarUsuario(req.tenantId, usuarioId, req.body);
 		res.status(200).json({ usuario });
 	} catch (error) {

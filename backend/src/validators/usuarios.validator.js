@@ -1,13 +1,17 @@
+import { esTexto } from "../utils/validacion.js";
+
 const ROLES_VALIDOS = ["ADMIN", "VENDEDOR", "CONTADOR"];
+const NOMBRE_MAX = 120;
+const CORREO_MAX = 150;
 
 export function validarCrearUsuario(body) {
 	const errores = [];
 	const { nombre, correo, contrasena, rol } = body ?? {};
 
-	if (!nombre || typeof nombre !== "string" || !nombre.trim()) {
-		errores.push("El nombre es obligatorio.");
+	if (!esTexto(nombre, NOMBRE_MAX)) {
+		errores.push(`El nombre es obligatorio y no puede superar los ${NOMBRE_MAX} caracteres.`);
 	}
-	if (!correo || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+	if (typeof correo !== "string" || correo.length > CORREO_MAX || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
 		errores.push("El correo no es válido.");
 	}
 	if (!contrasena || typeof contrasena !== "string" || contrasena.length < 8) {

@@ -16,9 +16,35 @@ export default function DashboardLayout() {
 				<NavLink to="/dashboard" className={itemClase}>
 					<span>Inicio</span>
 				</NavLink>
+				<NavLink to="/productos" className={itemClase}>
+					<span>Productos</span>
+				</NavLink>
+				{(usuario?.rol === "ADMIN" || usuario?.rol === "VENDEDOR") && (
+					<NavLink to="/inventario" className={itemClase}>
+						<span>Inventario</span>
+					</NavLink>
+				)}
 				{usuario?.rol === "ADMIN" && (
 					<NavLink to="/usuarios" className={itemClase}>
 						<span>Usuarios</span>
+					</NavLink>
+				)}
+
+				{["ADMIN", "VENDEDOR"].includes(usuario?.rol) && (
+					<NavLink to="/clientes" className={itemClase}>
+						<span>Clientes</span>
+					</NavLink>
+				)}
+
+				{["ADMIN", "VENDEDOR", "CONTADOR"].includes(usuario?.rol) && (
+					<NavLink to="/facturas" end className={itemClase}>
+						<span>Facturas</span>
+					</NavLink>
+				)}
+
+				{["ADMIN", "VENDEDOR"].includes(usuario?.rol) && (
+					<NavLink to="/facturas/nueva" className={itemClase}>
+						<span>Nueva factura</span>
 					</NavLink>
 				)}
 			</aside>

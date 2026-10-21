@@ -1,8 +1,20 @@
 import prisma from "../config/prisma.js";
 import { hashPassword } from "../utils/hash.js";
+import { NotFoundError } from "../utils/errors.js";
 
 export class NitDuplicadoError extends Error {}
 export class CorreoDuplicadoError extends Error {}
+
+export async function obtenerNegocioActual(tenantId) {
+	const negocio = await prisma.negocio.findUnique({
+		where: { id: tenantId },
+		select: { id: true, nombre: true, tarifaIvaDefault: true },
+	});
+	if (!negocio) {
+		throw new NotFoundError("Negocio no encontrado.");
+	}
+	return negocio;
+}
 
 export async function registrarNegocioConAdmin({
 	nombre,
@@ -18,8 +30,8 @@ export async function registrarNegocioConAdmin({
 		return await prisma.$transaction(async (tx) => {
 			const negocio = await tx.negocio.create({
 				data: {
-					nombre,
-					nit,
+					nombre: nombre.trim(),
+					nit: nit.trim(),
 					...(tarifaIvaDefault !== undefined ? { tarifaIvaDefault } : {}),
 				},
 			});
@@ -27,7 +39,7 @@ export async function registrarNegocioConAdmin({
 			const usuario = await tx.usuario.create({
 				data: {
 					tenantId: negocio.id,
-					nombre: adminNombre,
+					nombre: adminNombre.trim(),
 					correo: adminCorreo,
 					contraseñaHash,
 					rol: "ADMIN",
