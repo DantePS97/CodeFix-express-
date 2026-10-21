@@ -1,13 +1,14 @@
 import { validarCrearProducto, validarActualizarProducto } from "../validators/productos.validator.js";
 import { listar as listarProductos, crear as crearProducto, actualizar as actualizarProducto, listarAlertasStock } from "../services/productos.service.js";
 import { ValidationError } from "../utils/errors.js";
-import { leerEnteroPositivo, leerTexto } from "../utils/query.js";
+import { leerBooleano, leerEnteroPositivo, leerTexto } from "../utils/query.js";
 
 export async function listar(req, res, next) {
 	try {
 		const nombre = leerTexto(req.query.nombre, "nombre");
 		const categoriaId = leerEnteroPositivo(req.query.categoriaId, "categoriaId");
-		const productos = await listarProductos(req.tenantId, { nombre, categoriaId });
+		const incluirInactivos = leerBooleano(req.query.incluirInactivos, "incluirInactivos");
+		const productos = await listarProductos(req.tenantId, { nombre, categoriaId, incluirInactivos });
 		res.status(200).json({ productos });
 	} catch (error) {
 		next(error);

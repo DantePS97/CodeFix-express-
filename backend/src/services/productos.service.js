@@ -17,8 +17,11 @@ async function verificarCategoria(tenantId, categoriaId) {
 	}
 }
 
-export async function listar(tenantId, { nombre, categoriaId } = {}) {
-	const where = { tenantId, activo: true };
+export async function listar(tenantId, { nombre, categoriaId, incluirInactivos = false } = {}) {
+	const where = { tenantId };
+	if (!incluirInactivos) {
+		where.activo = true;
+	}
 	if (nombre !== undefined) {
 		where.nombre = { contains: nombre };
 	}

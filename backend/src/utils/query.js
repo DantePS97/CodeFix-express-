@@ -26,6 +26,18 @@ export function leerEnteroPositivo(valor, nombre) {
 	return numero;
 }
 
+// Solo acepta "true" o "false": cualquier otro valor es un error, no un false implícito.
+export function leerBooleano(valor, nombre) {
+	const texto = leerTexto(valor, nombre);
+	if (texto === undefined) {
+		return undefined;
+	}
+	if (texto !== "true" && texto !== "false") {
+		throw new ValidationError(`El parámetro "${nombre}" debe ser "true" o "false".`);
+	}
+	return texto === "true";
+}
+
 // Fecha YYYY-MM-DD interpretada a medianoche en la hora local del servidor.
 export function leerFecha(valor, nombre) {
 	const texto = leerTexto(valor, nombre);
