@@ -41,3 +41,22 @@ Registro breve por sesión: lo planeado, lo completado y los bloqueos (Plan de T
 **Bloqueos:** ninguno.
 
 **Pendiente:** un commit por tarjeta (RF-012, RF-013, RF-014, RF-015) y la fase de frontend.
+
+## Sesión 2026-10-21 — IVA real en nueva factura y reactivación de productos
+
+**Planeado:** cerrar el pendiente de `[Sprint 3 - 05 - 02]` (la vista previa de "Nueva factura" usaba 19% fijo porque el frontend no tenía `Negocio.tarifaIvaDefault`) y corregir el bug de Sprint 2 por el que un producto desactivado desaparecía de `/productos` y no se podía volver a activar.
+
+**Completado:**
+- `GET /api/negocios/actual` (ADMIN y VENDEDOR, `auth` + `tenant` por ruta porque `POST /api/negocios` es público): devuelve `{ negocio: { id, nombre, tarifaIvaDefault } }` con campos explícitos; la tarifa viaja como string (`"8.25"`).
+- `NewInvoicesPage` carga la tarifa al montar y calcula el IVA en centavos enteros con la tarifa en puntos base (`"8.25"` -> 825), redondeo half-up, igual que el backend. Si la tarifa no carga no se muestra IVA ni total (nunca se cae a 19%), se avisa que el servidor los calcula y se puede confirmar igual. Tras confirmar se muestran los totales reales de la respuesta.
+- `GET /api/productos?incluirInactivos=true|false` con `leerBooleano` en `utils/query.js` (solo `"true"` o `"false"`, parámetro repetido o cualquier otro valor 400). Sin el parámetro se mantiene solo activos, así que selector de facturas, inventario y alertas de stock no cambian. `alertas-stock` sigue solo activos.
+- `ProductsPage` es la única que pide `incluirInactivos: true`; los inactivos muestran la insignia "Inactivo" y el botón "Activar".
+
+**Resultado (servidor real, tres negocios de prueba con tarifas 8.25, 19 y 0):**
+- Backend, 66 verificaciones: `/negocios/actual` 200 para ADMIN y VENDEDOR con solo tres campos, CONTADOR 403, sin token o token inválido 401, cada negocio ve su tarifa (también tras cambiarla en la base), `?tenantId=` ignorado; productos con `incluirInactivos` en todas sus variantes, combinado con `nombre` y `categoriaId`, sin cruce entre negocios, `alertas-stock` intacto, factura 201 con totales idénticos a la fórmula del frontend y anulación 200.
+- Navegador, ADMIN y VENDEDOR en los tres negocios: la vista previa coincidió al centavo con los totales devueltos por el backend, incluidos redondeos con centavos impares y un empate exacto (23,465 -> 23,47). Con la carga de la tarifa fallando, solo se ve el subtotal y la nota, y la factura se confirma con totales reales. En `/productos`: desactivar mantiene la fila con "Inactivo" y "Activar", la búsqueda encuentra inactivos y se mantiene al activar, y `/inventario` y "Nueva factura" no listan inactivos hasta que se reactivan. Consola sin errores en navegación nueva.
+- Datos de prueba eliminados y servidores detenidos.
+
+**Hallazgos fuera de alcance (no corregidos):**
+- Express 5 ignora `?incluirInactivos[]=true` (clave `incluirInactivos[]`), igual que los demás filtros: se usa el valor por defecto. Solo un parámetro repetido forma un array y da 400.
+- `incluirInactivos=` vacío se trata como ausente, igual que los otros helpers de `utils/query.js`.
