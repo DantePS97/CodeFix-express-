@@ -12,8 +12,12 @@ export function aCentavos(valor) {
 	return Number(entero) * 100 + Number(decimal.padEnd(2, "0").slice(0, 2));
 }
 
-// Redondeo half-up a 2 decimales, igual que el backend (tarifa en porcentaje, ej. 19 o 19.5).
-export function calcularImpuestoCentavos(subtotalCentavos, tarifa) {
-	const centesimas = Math.round(tarifa * 100);
-	return Math.floor((subtotalCentavos * centesimas + 5000) / 10000);
+// La tarifa llega como string en porcentaje ("8.25" -> 825 puntos base), con la misma escala que aCentavos.
+export function aPuntosBase(tarifa) {
+	return aCentavos(tarifa);
+}
+
+// Redondeo half-up a 2 decimales, igual que el backend.
+export function calcularImpuestoCentavos(subtotalCentavos, puntosBase) {
+	return Math.floor((subtotalCentavos * puntosBase + 5000) / 10000);
 }

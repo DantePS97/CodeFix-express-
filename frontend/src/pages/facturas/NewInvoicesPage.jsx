@@ -2,18 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useInvoices } from "../../hooks/useInvoices";
 import { useClients } from "../../hooks/useClients";
 import { useProducts } from "../../hooks/useProducts";
+import { obtenerNegocioActual } from "../../services/business.service";
 
 import Card from "../../components/Card/Card";
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Select from "../../components/Select/Select";
 
-import { aCentavos, calcularImpuestoCentavos, formatearCentavos, formatearDinero } from "../../utils/money";
+import { aCentavos, aPuntosBase, calcularImpuestoCentavos, formatearCentavos, formatearDinero } from "../../utils/money";
 
 import "./NewInvoicesPage.css";
-
-/* El backend no expone Negocio.tarifaIvaDefault: la vista previa usa esta tarifa estimada */
-const TARIFA_IVA_ESTIMADA = 19;
 
 export default function NewInvoicesPage() {
 	const { crearFactura } = useInvoices();
@@ -28,6 +26,27 @@ export default function NewInvoicesPage() {
 	const [facturaEmitida, setFacturaEmitida] = useState(null);
 	const [errorFactura, setErrorFactura] = useState("");
 	const [guardando, setGuardando] = useState(false);
+
+	/* Porcentaje como string ("19", "8.25"); null si todavía no se cargó o falló */
+	const [tarifaIva, setTarifaIva] = useState(null);
+	const [cargandoTarifa, setCargandoTarifa] = useState(true);
+
+	useEffect(() => {
+		let cancelado = false;
+
+		obtenerNegocioActual()
+			.then((negocio) => {
+				if (!cancelado) setTarifaIva(negocio.tarifaIvaDefault);
+			})
+			.catch(() => {})
+			.finally(() => {
+				if (!cancelado) setCargandoTarifa(false);
+			});
+
+		return () => {
+			cancelado = true;
+		};
+	}, []);
 
 	/* El backend rechaza facturar a clientes inactivos */
 	const clientesActivos = useMemo(
@@ -114,13 +133,13 @@ export default function NewInvoicesPage() {
 		);
 	}, [carrito]);
 
-	/* Valor informativo solamente */
-	const impuesto = useMemo(() => {
-		return calcularImpuestoCentavos(subtotal, TARIFA_IVA_ESTIMADA);
-	}, [subtotal]);
+	const puntosBaseIva = useMemo(() => {
+		return /^\d+(\.\d{1,2})?$/.test(String(tarifaIva)) ? aPuntosBase(tarifaIva) : null;
+	}, [tarifaIva]);
 
-	/* Valor informativo solamente */
-	const total = subtotal + impuesto;
+	/* Sin tarifa real no se muestra IVA ni total: el servidor los calcula al confirmar */
+	const impuesto = puntosBaseIva === null ? null : calcularImpuestoCentavos(subtotal, puntosBaseIva);
+	const total = impuesto === null ? null : subtotal + impuesto;
 
 	const confirmarFactura = async () => {
 		if (!clienteId || carrito.length === 0) {
@@ -259,24 +278,30 @@ export default function NewInvoicesPage() {
 						</strong>
 					</div>
 
-					<div>
-						<span>Impuesto (IVA estimado {TARIFA_IVA_ESTIMADA}%):</span>
-						<strong>
-							{formatearCentavos(impuesto)}
-						</strong>
-					</div>
+					{impuesto !== null && (
+						<>
+							<div>
+								<span>Impuesto (IVA {Number(tarifaIva)}%):</span>
+								<strong>
+									{formatearCentavos(impuesto)}
+								</strong>
+							</div>
 
-					<div className="invoice-total">
-						<span>Total estimado:</span>
-						<strong>
-							{formatearCentavos(total)}
-						</strong>
-					</div>
+							<div className="invoice-total">
+								<span>Total:</span>
+								<strong>
+									{formatearCentavos(total)}
+								</strong>
+							</div>
+						</>
+					)}
 				</div>
 
-				<p className="text-muted invoice-note">
-					Valores estimados: el IVA y el total reales los calcula el servidor al confirmar la factura.
-				</p>
+				{!cargandoTarifa && impuesto === null && (
+					<p className="text-muted invoice-note">
+						No se pudo cargar la tarifa de IVA: el servidor calculará el IVA y el total al confirmar la factura.
+					</p>
+				)}
 
 				{errorFactura && (
 					<p className="form-error invoice-note">{errorFactura}</p>
