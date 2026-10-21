@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useProducts } from "../../hooks/useProducts.js";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue.js";
+import Card from "../../components/Card/Card.jsx";
+import PageHeader from "../../components/PageHeader/PageHeader.jsx";
 import Table from "../../components/Table/Table.jsx";
 import Badge from "../../components/Badge/Badge.jsx";
 import Modal from "../../components/Modal/Modal.jsx";
 import Select from "../../components/Select/Select.jsx";
-import Button from "../../components/Button/Button.jsx";
+import Button, { IconButton } from "../../components/Button/Button.jsx";
 import Input from "../../components/Input/Input.jsx";
 import { formatearDinero } from "../../utils/money.js";
 import "./ProductsPage.css";
@@ -90,28 +92,29 @@ export default function ProductsPage() {
 	const opcionesCategorias = categorias.map((c) => ({ value: c.id, label: c.nombre }));
 
 	return (
-		<div>
-			<div className="products-toolbar">
-				<h1>Productos</h1>
-				{puedeEditar && <Button onClick={abrirCrear}>+ Nuevo producto</Button>}
-			</div>
+		<Card>
+			<PageHeader title="Productos">{puedeEditar && <Button onClick={abrirCrear}>+ Nuevo producto</Button>}</PageHeader>
 
-			<div className="products-search">
-				<Input
-					id="busquedaProductos"
-					label="Buscar"
-					placeholder="Nombre del producto"
-					value={busqueda}
-					onChange={(evento) => setBusqueda(evento.target.value)}
-				/>
+			<div className="module-toolbar">
+				<div className="products-search">
+					<Input
+						id="busquedaProductos"
+						label="Buscar"
+						hideLabel
+						icon="search"
+						placeholder="Buscar por nombre del producto"
+						value={busqueda}
+						onChange={(evento) => setBusqueda(evento.target.value)}
+					/>
+				</div>
 			</div>
 
 			{error && <p className="form-error">{error}</p>}
 
 			{cargando ? (
-				<p>Cargando...</p>
+				<p className="module-empty">Cargando...</p>
 			) : productos.length === 0 ? (
-				<p>{nombre ? "No se encontraron productos con esa búsqueda." : "No hay productos registrados."}</p>
+				<p className="module-empty">{nombre ? "No se encontraron productos con esa búsqueda." : "No hay productos registrados."}</p>
 			) : (
 				<Table>
 					<thead>
@@ -119,10 +122,10 @@ export default function ProductsPage() {
 							<th>Nombre</th>
 							<th>Código</th>
 							<th>Categoría</th>
-							<th>Precio</th>
-							<th>Stock</th>
+							<th className="cell-number">Precio</th>
+							<th className="cell-number">Stock</th>
 							<th>Estado</th>
-							{puedeEditar && <th></th>}
+							{puedeEditar && <th>Acciones</th>}
 						</tr>
 					</thead>
 					<tbody>
@@ -131,19 +134,22 @@ export default function ProductsPage() {
 								<td>{p.nombre}</td>
 								<td>{p.codigo}</td>
 								<td>{categorias.find((c) => c.id === p.categoriaId)?.nombre ?? "—"}</td>
-								<td>{formatearDinero(p.precio)}</td>
-								<td>{p.stock}</td>
+								<td className="cell-number">{formatearDinero(p.precio)}</td>
+								<td className="cell-number">{p.stock}</td>
 								<td>
-									<Badge variant={p.activo ? "success" : "neutral"}>{p.activo ? "Activo" : "Inactivo"}</Badge>
+									<Badge variant={p.activo ? "success" : "danger"}>{p.activo ? "Activo" : "Inactivo"}</Badge>
 								</td>
 								{puedeEditar && (
-									<td className="products-table-actions">
-										<Button variant="secondary" onClick={() => abrirEditar(p)}>
-											Editar
-										</Button>
-										<Button variant="secondary" onClick={() => alternarActivo(p)}>
-											{p.activo ? "Desactivar" : "Activar"}
-										</Button>
+									<td>
+										<div className="table-actions">
+											<IconButton icon="pencil" label={`Editar ${p.nombre}`} onClick={() => abrirEditar(p)} />
+											<IconButton
+												icon="power"
+												label={`${p.activo ? "Desactivar" : "Activar"} ${p.nombre}`}
+												variant={p.activo ? "danger" : "neutral"}
+												onClick={() => alternarActivo(p)}
+											/>
+										</div>
 									</td>
 								)}
 							</tr>
@@ -201,6 +207,6 @@ export default function ProductsPage() {
 					<Button type="submit">Guardar</Button>
 				</form>
 			</Modal>
-		</div>
+		</Card>
 	);
 }

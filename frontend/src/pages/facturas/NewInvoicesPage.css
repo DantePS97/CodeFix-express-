@@ -1,45 +1,48 @@
 .new-invoice-page {
 	display: flex;
 	flex-direction: column;
-	gap: 1.5rem;
 }
 
-.page-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
+/* Dos columnas como el punto de venta de los mapas: datos de la venta a la
+   izquierda, carrito y totales a la derecha; apiladas en pantallas angostas. */
+.new-invoice-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+	gap: var(--spacing-lg);
+	align-items: start;
+}
+
+.new-invoice-card-title {
+	margin-bottom: var(--spacing-md);
+	font-size: var(--font-size-base);
+	font-weight: var(--font-weight-bold);
+	color: var(--color-primary-dark);
 }
 
 .invoice-form {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: var(--spacing-md);
 }
 
 .invoice-product-row {
 	display: grid;
-	grid-template-columns: 2fr 120px auto;
-	gap: 1rem;
+	grid-template-columns: minmax(0, 1fr) 96px;
+	gap: var(--spacing-md);
 	align-items: end;
 }
 
-.invoice-table {
-	width: 100%;
-	border-collapse: collapse;
-}
-
-.invoice-table th,
-.invoice-table td {
-	padding: 0.75rem;
-	border-bottom: 1px solid #e5e7eb;
-	text-align: left;
+.invoice-product-row > .btn {
+	grid-column: 1 / -1;
 }
 
 .invoice-summary {
 	display: flex;
 	flex-direction: column;
-	gap: 0.75rem;
-	margin-bottom: 1rem;
+	gap: var(--spacing-sm);
+	margin: var(--spacing-md) 0;
+	padding-top: var(--spacing-md);
+	border-top: 1px solid var(--color-border);
 }
 
 .invoice-summary > div {
@@ -48,19 +51,28 @@
 }
 
 .invoice-total {
-	font-size: 1.1rem;
-	font-weight: 700;
-	padding-top: 0.5rem;
-	border-top: 1px solid #e5e7eb;
+	font-size: var(--font-size-lg);
+	font-weight: var(--font-weight-bold);
+	color: var(--color-primary-dark);
+	padding-top: var(--spacing-sm);
+	border-top: 1px solid var(--color-border);
 }
 
 .invoice-note {
-	margin-bottom: 1rem;
+	margin-bottom: var(--spacing-md);
 }
 
 .invoice-success {
-	margin-top: 1rem;
-	padding: 1rem;
-	border-radius: 8px;
-	background: #ecfdf5;
+	margin-top: var(--spacing-md);
+	padding: var(--spacing-md);
+	border-radius: var(--radius-md);
+	background: var(--color-status-success-bg);
+	color: var(--color-status-success-text);
+	font-size: var(--font-size-sm);
+}
+
+@media (max-width: 1100px) {
+	.new-invoice-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
 }

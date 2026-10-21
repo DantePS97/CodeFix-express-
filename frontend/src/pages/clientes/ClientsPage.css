@@ -1,23 +1,7 @@
-.clients-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.clients-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .clients-search {
-  max-width: 320px;
-  margin-bottom: 1rem;
-}
-
-.clients-table-actions {
-  display: flex;
-  gap: 0.5rem;
+  flex: 1;
+  min-width: 220px;
+  max-width: 360px;
 }
 
 .clients-form {

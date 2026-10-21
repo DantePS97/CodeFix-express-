@@ -6,7 +6,8 @@ import Table from "../../components/Table/Table.jsx";
 import Badge from "../../components/Badge/Badge.jsx";
 import Modal from "../../components/Modal/Modal.jsx";
 import Select from "../../components/Select/Select.jsx";
-import Button from "../../components/Button/Button.jsx";
+import PageHeader from "../../components/PageHeader/PageHeader.jsx";
+import Button, { IconButton } from "../../components/Button/Button.jsx";
 import Input from "../../components/Input/Input.jsx";
 import "./UsersPage.css";
 
@@ -118,10 +119,9 @@ export default function UsersPage() {
 
 	return (
 		<Card>
-			<div className="users-header">
-				<h1 className="users-title">Usuarios</h1>
+			<PageHeader title="Usuarios">
 				<Button onClick={abrirCrear}>+ Nuevo usuario</Button>
-			</div>
+			</PageHeader>
 
 			{aviso && (
 				<p className="users-alert users-alert-success" role="status">
@@ -167,7 +167,7 @@ export default function UsersPage() {
 										{u.nombre}
 										{esPropio && (
 											<span className="users-self">
-												<Badge variant="neutral">Tú</Badge>
+												<Badge variant="info">Tú</Badge>
 											</span>
 										)}
 									</td>
@@ -176,29 +176,26 @@ export default function UsersPage() {
 										<Badge variant="neutral">{ETIQUETA_ROL[u.rol] ?? u.rol}</Badge>
 									</td>
 									<td>
-										<Badge variant={u.activo ? "success" : "neutral"}>{u.activo ? "Activo" : "Inactivo"}</Badge>
+										<Badge variant={u.activo ? "success" : "danger"}>{u.activo ? "Activo" : "Inactivo"}</Badge>
 									</td>
 									<td>
-										<div className="users-actions">
+										<div className="table-actions">
 											<span title={esPropio ? AVISO_PROPIA_CUENTA : undefined}>
-												<Button
-													variant="secondary"
+												<IconButton
+													icon="pencil"
+													label={`Cambiar rol de ${u.nombre}`}
 													onClick={() => abrirCambioRol(u)}
 													disabled={esPropio || ocupado}
-													aria-label={`Cambiar rol de ${u.nombre}`}
-												>
-													Cambiar rol
-												</Button>
+												/>
 											</span>
 											<span title={esPropio ? AVISO_PROPIA_CUENTA : undefined}>
-												<Button
-													variant="secondary"
+												<IconButton
+													icon="power"
+													label={`${u.activo ? "Desactivar" : "Activar"} a ${u.nombre}`}
+													variant={u.activo ? "danger" : "neutral"}
 													onClick={() => alternarActivo(u)}
 													disabled={esPropio || ocupado}
-													aria-label={`${u.activo ? "Desactivar" : "Activar"} a ${u.nombre}`}
-												>
-													{u.activo ? "Desactivar" : "Activar"}
-												</Button>
+												/>
 											</span>
 										</div>
 									</td>

@@ -9,7 +9,8 @@ import Table from "../../components/Table/Table.jsx";
 import Badge from "../../components/Badge/Badge.jsx";
 import Modal from "../../components/Modal/Modal.jsx";
 import Select from "../../components/Select/Select.jsx";
-import Button from "../../components/Button/Button.jsx";
+import PageHeader from "../../components/PageHeader/PageHeader.jsx";
+import Button, { ButtonLink } from "../../components/Button/Button.jsx";
 import Input from "../../components/Input/Input.jsx";
 import "./InvoicesPage.css";
 
@@ -32,6 +33,8 @@ export default function InvoicesPage() {
 	// CONTADOR no puede listar clientes (403): no se consulta ni se muestra el filtro.
 	const puedeFiltrarCliente = ["ADMIN", "VENDEDOR"].includes(usuario?.rol);
 	const puedeAnular = usuario?.rol === "ADMIN";
+	// Mismos roles que acceden a /facturas/nueva (ver routes/AppRoutes.jsx).
+	const puedeCrear = ["ADMIN", "VENDEDOR"].includes(usuario?.rol);
 
 	const [clientes, setClientes] = useState([]);
 	const [filtros, setFiltros] = useState(FILTROS_INICIALES);
@@ -124,10 +127,12 @@ export default function InvoicesPage() {
 	];
 
 	return (
-		<div className="invoices-page">
-			<h1>Facturas</h1>
+		<Card>
+			<PageHeader title="Facturas">
+				{puedeCrear && <ButtonLink to="/facturas/nueva">+ Nueva factura</ButtonLink>}
+			</PageHeader>
 
-			<Card>
+			<div className="module-toolbar">
 				<form className="invoices-filters" onSubmit={aplicarFiltros}>
 					<div className="invoices-filters-grid">
 						<Select
@@ -156,14 +161,14 @@ export default function InvoicesPage() {
 						</Button>
 					</div>
 				</form>
-			</Card>
+			</div>
 
 			{error && <p className="form-error">{mensajeDe(error, "No se pudieron cargar las facturas.")}</p>}
 
 			{loading ? (
-				<p>Cargando...</p>
+				<p className="module-empty">Cargando...</p>
 			) : facturas.length === 0 ? (
-				<p>No hay facturas para los filtros seleccionados.</p>
+				<p className="module-empty">No hay facturas para los filtros seleccionados.</p>
 			) : (
 				<Table>
 					<thead>
@@ -171,7 +176,7 @@ export default function InvoicesPage() {
 							<th>Número</th>
 							<th>Cliente</th>
 							<th>Fecha</th>
-							<th>Total</th>
+							<th className="cell-number">Total</th>
 							<th>Estado</th>
 						</tr>
 					</thead>
@@ -189,9 +194,9 @@ export default function InvoicesPage() {
 								<td>#{f.numero}</td>
 								<td>{f.cliente?.nombre ?? "—"}</td>
 								<td>{new Date(f.createdAt).toLocaleDateString("es-CO")}</td>
-								<td>{formatearDinero(f.total)}</td>
+								<td className="cell-number">{formatearDinero(f.total)}</td>
 								<td>
-									<Badge variant={f.estado === "EMITIDA" ? "success" : "neutral"}>
+									<Badge variant={f.estado === "EMITIDA" ? "success" : "danger"}>
 										{f.estado === "EMITIDA" ? "Emitida" : "Anulada"}
 									</Badge>
 								</td>
@@ -201,7 +206,12 @@ export default function InvoicesPage() {
 				</Table>
 			)}
 
-			<Modal open={Boolean(seleccionada)} onClose={cerrarDetalle} title={seleccionada ? `Factura #${seleccionada.numero}` : ""}>
+			<Modal
+				open={Boolean(seleccionada)}
+				onClose={cerrarDetalle}
+				title={seleccionada ? `Factura #${seleccionada.numero}` : ""}
+				className="modal-wide"
+			>
 				{seleccionada && (
 					<div className="invoice-detail">
 						<div className="invoice-detail-info">
@@ -215,7 +225,7 @@ export default function InvoicesPage() {
 							</div>
 							<div className="invoice-detail-field">
 								<span>Estado</span>
-								<Badge variant={seleccionada.estado === "EMITIDA" ? "success" : "neutral"}>
+								<Badge variant={seleccionada.estado === "EMITIDA" ? "success" : "danger"}>
 									{seleccionada.estado === "EMITIDA" ? "Emitida" : "Anulada"}
 								</Badge>
 							</div>
@@ -317,6 +327,6 @@ export default function InvoicesPage() {
 					</div>
 				)}
 			</Modal>
-		</div>
+		</Card>
 	);
 }

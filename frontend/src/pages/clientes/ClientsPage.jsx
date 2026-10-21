@@ -4,8 +4,9 @@ import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 
 import Table from "../../components/Table/Table";
 import Card from "../../components/Card/Card";
+import PageHeader from "../../components/PageHeader/PageHeader";
 import Modal from "../../components/Modal/Modal";
-import Button from "../../components/Button/Button";
+import Button, { IconButton } from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Badge from "../../components/Badge/Badge";
 
@@ -114,7 +115,7 @@ const ClientsPage = () => {
     {
       header: "Estado",
       cell: (cliente) => (
-        <Badge variant={cliente.activo ? "success" : "neutral"}>
+        <Badge variant={cliente.activo ? "success" : "danger"}>
           {cliente.activo ? "Activo" : "Inactivo"}
         </Badge>
       ),
@@ -122,80 +123,83 @@ const ClientsPage = () => {
     {
       header: "Acciones",
       cell: (cliente) => (
-        <div className="clients-table-actions">
-          <Button variant="secondary" onClick={() => abrirEditar(cliente)}>
-            Editar
-          </Button>
-          <Button variant="secondary" onClick={() => alternarActivo(cliente)}>
-            {cliente.activo ? "Desactivar" : "Activar"}
-          </Button>
+        <div className="table-actions">
+          <IconButton
+            icon="pencil"
+            label={`Editar ${cliente.nombre}`}
+            onClick={() => abrirEditar(cliente)}
+          />
+          <IconButton
+            icon="power"
+            label={`${cliente.activo ? "Desactivar" : "Activar"} ${cliente.nombre}`}
+            variant={cliente.activo ? "danger" : "neutral"}
+            onClick={() => alternarActivo(cliente)}
+          />
         </div>
       ),
     },
   ];
 
   return (
-    <div className="clients-page">
-      <div className="clients-toolbar">
-        <h1>Clientes</h1>
+    <Card>
+      <PageHeader title="Clientes">
+        <Button onClick={abrirCrear}>+ Nuevo cliente</Button>
+      </PageHeader>
 
-        <Button onClick={abrirCrear}>
-          + Nuevo cliente
-        </Button>
-      </div>
-
-      <Card>
+      <div className="module-toolbar">
         <div className="clients-search">
           <Input
             id="busquedaClientes"
             label="Buscar"
-            placeholder="Nombre o documento"
+            hideLabel
+            icon="search"
+            placeholder="Buscar por nombre o documento"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />
         </div>
+      </div>
 
-        {error && (
-          <p className="form-error">
-            {error.response?.data?.error?.mensaje ?? "No se pudieron cargar los clientes."}
-          </p>
-        )}
+      {error && (
+        <p className="form-error">
+          {error.response?.data?.error?.mensaje ?? "No se pudieron cargar los clientes."}
+        </p>
+      )}
 
-        {errorAccion && <p className="form-error">{errorAccion}</p>}
+      {errorAccion && <p className="form-error">{errorAccion}</p>}
 
-        {loading ? (
-          <p>Cargando...</p>
-        ) : clientes.length === 0 ? (
-          <p>
-            {nombre
-              ? "No se encontraron clientes con esa búsqueda."
-              : "No hay clientes registrados."}
-          </p>
-        ) : (
-          <Table>
-            <thead>
-              <tr>
+      {loading ? (
+        <p className="module-empty">Cargando...</p>
+      ) : clientes.length === 0 ? (
+        <p className="module-empty">
+          {nombre
+            ? "No se encontraron clientes con esa búsqueda."
+            : "No hay clientes registrados."}
+        </p>
+      ) : (
+        <Table>
+          <thead>
+            <tr>
+              {columnas.map((columna) => (
+                <th key={columna.header}>{columna.header}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {clientes.map((cliente) => (
+              <tr key={cliente.id}>
                 {columnas.map((columna) => (
-                  <th key={columna.header}>{columna.header}</th>
+                  <td key={columna.header}>
+                    {columna.cell
+                      ? columna.cell(cliente)
+                      : cliente[columna.accessor]}
+                  </td>
                 ))}
               </tr>
-            </thead>
-            <tbody>
-              {clientes.map((cliente) => (
-                <tr key={cliente.id}>
-                  {columnas.map((columna) => (
-                    <td key={columna.header}>
-                      {columna.cell
-                        ? columna.cell(cliente)
-                        : cliente[columna.accessor]}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        )}
-      </Card>
+            ))}
+          </tbody>
+        </Table>
+      )}
 
       <Modal
         open={modalOpen}
@@ -252,7 +256,7 @@ const ClientsPage = () => {
           </div>
         </form>
       </Modal>
-    </div>
+    </Card>
   );
 };
 
