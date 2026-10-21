@@ -16,7 +16,7 @@ export default function ProductsPage() {
 	const { usuario } = useAuth();
 	const [busqueda, setBusqueda] = useState("");
 	const nombre = useDebouncedValue(busqueda.trim(), 300);
-	const { productos, categorias, cargando, error, crear, actualizar } = useProducts({ nombre });
+	const { productos, categorias, cargando, error, crear, actualizar } = useProducts({ nombre, incluirInactivos: true });
 	const [modalAbierto, setModalAbierto] = useState(false);
 	const [productoEditando, setProductoEditando] = useState(null);
 	const [form, setForm] = useState(CAMPOS_INICIALES);

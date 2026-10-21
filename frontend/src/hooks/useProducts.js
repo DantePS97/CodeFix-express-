@@ -9,7 +9,7 @@ import {
 
 // Estado local por página, sin store global (DDS 6.2): cada mutación
 // refresca la lista consultando de nuevo al backend.
-export function useProducts({ nombre = "" } = {}) {
+export function useProducts({ nombre = "", incluirInactivos = false } = {}) {
 	const [productos, setProductos] = useState([]);
 	const [categorias, setCategorias] = useState([]);
 	const [cargando, setCargando] = useState(true);
@@ -22,7 +22,7 @@ export function useProducts({ nombre = "" } = {}) {
 		setError("");
 		try {
 			const [listaProductos, listaCategorias] = await Promise.all([
-				listarProductos(nombre ? { nombre } : {}),
+				listarProductos({ ...(nombre ? { nombre } : {}), ...(incluirInactivos ? { incluirInactivos: true } : {}) }),
 				listarCategorias(),
 			]);
 			// Una búsqueda más nueva ya está en vuelo: esta respuesta quedó vieja.
@@ -35,7 +35,7 @@ export function useProducts({ nombre = "" } = {}) {
 		} finally {
 			if (peticion === ultimaPeticion.current) setCargando(false);
 		}
-	}, [nombre]);
+	}, [nombre, incluirInactivos]);
 
 	useEffect(() => {
 		refrescar();
