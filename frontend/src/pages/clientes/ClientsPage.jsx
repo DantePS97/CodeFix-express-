@@ -183,6 +183,7 @@ const ClientsPage = () => {
         >
           <Input
             label="Nombre"
+            id="nombreCliente"
             name="nombre"
             value={formulario.nombre}
             onChange={handleChange}
@@ -191,6 +192,7 @@ const ClientsPage = () => {
 
           <Input
             label="Documento"
+            id="identificacionCliente"
             name="identificacion"
             value={formulario.identificacion}
             onChange={handleChange}
@@ -198,6 +200,7 @@ const ClientsPage = () => {
 
           <Input
             label="Contacto"
+            id="contactoCliente"
             name="contacto"
             value={formulario.contacto}
             onChange={handleChange}

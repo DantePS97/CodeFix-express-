@@ -48,6 +48,10 @@ export default function InventoryPage() {
 	async function manejarGuardar(evento) {
 		evento.preventDefault();
 		setErrorForm("");
+		if (form.cantidad === "") {
+			setErrorForm("Ingresá la cantidad.");
+			return;
+		}
 		try {
 			await registrar({
 				productoId: Number(form.productoId),
@@ -90,7 +94,7 @@ export default function InventoryPage() {
 							<tbody>
 								{movimientos.map((m) => (
 									<tr key={m.id}>
-										<td>{productos.find((p) => p.id === m.productoId)?.nombre ?? m.productoId}</td>
+										<td>{m.producto?.nombre ?? productos.find((p) => p.id === m.productoId)?.nombre ?? m.productoId}</td>
 										<td>{m.tipo}</td>
 										<td>{m.cantidad}</td>
 										<td>{m.stockAnterior}</td>
@@ -118,8 +122,10 @@ export default function InventoryPage() {
 					<Select id="tipo" label="Tipo" value={form.tipo} onChange={actualizarCampo("tipo")} options={tiposDisponibles} />
 					<Input
 						id="cantidad"
-						label="Cantidad"
+						label={form.tipo === "AJUSTE" ? "Stock resultante (0 si no quedan unidades)" : "Cantidad"}
 						type="number"
+						min={form.tipo === "AJUSTE" ? "0" : "1"}
+						step="1"
 						value={form.cantidad}
 						onChange={actualizarCampo("cantidad")}
 					/>

@@ -27,7 +27,7 @@ export function useInventory({ cargarAlInicio = true } = {}) {
 
 	async function registrar(datos) {
 		await registrarMovimiento(datos);
-		await refrescar();
+		if (cargarAlInicio) await refrescar();
 	}
 
 	return { movimientos, cargando, error, registrar };

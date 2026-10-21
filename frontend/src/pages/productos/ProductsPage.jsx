@@ -8,6 +8,7 @@ import Modal from "../../components/Modal/Modal.jsx";
 import Select from "../../components/Select/Select.jsx";
 import Button from "../../components/Button/Button.jsx";
 import Input from "../../components/Input/Input.jsx";
+import { formatearDinero } from "../../utils/money.js";
 import "./ProductsPage.css";
 
 const CAMPOS_INICIALES = { nombre: "", codigo: "", precio: "", categoriaId: "", stock: "", stockMinimo: "" };
@@ -60,8 +61,11 @@ export default function ProductsPage() {
 		try {
 			if (productoEditando) {
 				await actualizar(productoEditando.id, {
+					nombre: form.nombre,
+					codigo: form.codigo,
 					precio: Number(form.precio),
 					categoriaId: Number(form.categoriaId),
+					stockMinimo: Number(form.stockMinimo),
 				});
 			} else {
 				await crear({
@@ -69,8 +73,8 @@ export default function ProductsPage() {
 					codigo: form.codigo,
 					precio: Number(form.precio),
 					categoriaId: Number(form.categoriaId),
-					stock: Number(form.stock) || 0,
-					stockMinimo: Number(form.stockMinimo) || 5,
+					stock: form.stock === "" ? 0 : Number(form.stock),
+					stockMinimo: form.stockMinimo === "" ? 5 : Number(form.stockMinimo),
 				});
 			}
 			setModalAbierto(false);
@@ -127,7 +131,7 @@ export default function ProductsPage() {
 								<td>{p.nombre}</td>
 								<td>{p.codigo}</td>
 								<td>{categorias.find((c) => c.id === p.categoriaId)?.nombre ?? "—"}</td>
-								<td>${Number(p.precio).toLocaleString()}</td>
+								<td>{formatearDinero(p.precio)}</td>
 								<td>{p.stock}</td>
 								<td>
 									<Badge variant={p.activo ? "success" : "neutral"}>{p.activo ? "Activo" : "Inactivo"}</Badge>
@@ -154,20 +158,8 @@ export default function ProductsPage() {
 				title={productoEditando ? "Editar producto" : "Nuevo producto"}
 			>
 				<form className="products-form" onSubmit={manejarGuardar}>
-					<Input
-						id="nombre"
-						label="Nombre"
-						value={form.nombre}
-						onChange={actualizarCampo("nombre")}
-						disabled={Boolean(productoEditando)}
-					/>
-					<Input
-						id="codigo"
-						label="Código"
-						value={form.codigo}
-						onChange={actualizarCampo("codigo")}
-						disabled={Boolean(productoEditando)}
-					/>
+					<Input id="nombre" label="Nombre" value={form.nombre} onChange={actualizarCampo("nombre")} required />
+					<Input id="codigo" label="Código" value={form.codigo} onChange={actualizarCampo("codigo")} required />
 					<Select
 						id="categoriaId"
 						label="Categoría"
@@ -175,25 +167,36 @@ export default function ProductsPage() {
 						onChange={actualizarCampo("categoriaId")}
 						options={opcionesCategorias}
 					/>
-					<Input id="precio" label="Precio" type="number" value={form.precio} onChange={actualizarCampo("precio")} />
-					{!productoEditando && (
-						<>
-							<Input
-								id="stock"
-								label="Stock inicial"
-								type="number"
-								value={form.stock}
-								onChange={actualizarCampo("stock")}
-							/>
-							<Input
-								id="stockMinimo"
-								label="Stock mínimo"
-								type="number"
-								value={form.stockMinimo}
-								onChange={actualizarCampo("stockMinimo")}
-							/>
-						</>
-					)}
+					<Input
+						id="precio"
+						label="Precio"
+						type="number"
+						min="0"
+						step="0.01"
+						value={form.precio}
+						onChange={actualizarCampo("precio")}
+						required
+					/>
+					<Input
+						id="stock"
+						label={productoEditando ? "Stock actual (se cambia desde Inventario)" : "Stock inicial"}
+						type="number"
+						min="0"
+						step="1"
+						value={form.stock}
+						onChange={actualizarCampo("stock")}
+						disabled={Boolean(productoEditando)}
+					/>
+					<Input
+						id="stockMinimo"
+						label="Stock mínimo"
+						type="number"
+						min="0"
+						step="1"
+						value={form.stockMinimo}
+						onChange={actualizarCampo("stockMinimo")}
+						required={Boolean(productoEditando)}
+					/>
 					{errorForm && <p className="form-error">{errorForm}</p>}
 					<Button type="submit">Guardar</Button>
 				</form>
