@@ -11,23 +11,60 @@
 .data-table th {
 	text-align: left;
 	padding: var(--spacing-sm) var(--spacing-md);
-	color: var(--color-text-secondary);
-	font-weight: var(--font-weight-medium);
+	color: var(--color-text-primary);
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-bold);
+	letter-spacing: 0.02em;
+	background-color: var(--color-background);
 	border-bottom: 1px solid var(--color-border);
 	white-space: nowrap;
 }
 
+.data-table th:first-child {
+	border-top-left-radius: var(--radius-md);
+	border-bottom-left-radius: var(--radius-md);
+}
+
+.data-table th:last-child {
+	border-top-right-radius: var(--radius-md);
+	border-bottom-right-radius: var(--radius-md);
+}
+
 .data-table td {
-	padding: var(--spacing-sm) var(--spacing-md);
+	padding: 0.7rem var(--spacing-md);
 	border-bottom: 1px solid var(--color-border);
+	vertical-align: middle;
+}
+
+.data-table tbody tr:last-child td {
+	border-bottom: none;
 }
 
 .data-table tbody tr:hover {
-	background-color: var(--color-background);
+	background-color: #f7f9fd;
+}
+
+/* Alineación de números (precios, totales, cantidades). */
+.data-table .cell-number {
+	text-align: right;
+	white-space: nowrap;
+}
+
+/* Columna "Acciones": iconos pequeños en fila. */
+.table-actions {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: var(--spacing-sm);
 }
 
 @media (max-width: 480px) {
 	.data-table {
 		font-size: var(--font-size-xs);
+	}
+
+	.data-table th,
+	.data-table td {
+		padding-left: var(--spacing-sm);
+		padding-right: var(--spacing-sm);
 	}
 }

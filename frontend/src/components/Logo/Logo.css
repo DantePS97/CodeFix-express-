@@ -1,0 +1,73 @@
+.logo {
+	--logo-blue: var(--color-primary);
+	--logo-ink: var(--color-primary-dark);
+	--logo-green: var(--color-success);
+	display: inline-flex;
+	align-items: center;
+	gap: calc(var(--logo-size) * 0.25);
+	line-height: 1;
+}
+
+/* Sobre fondos oscuros: el nombre va en blanco y el azul se aclara. */
+.logo-light {
+	--logo-blue: var(--color-primary-light);
+	--logo-ink: var(--color-white);
+}
+
+.logo-stacked {
+	flex-direction: column;
+	text-align: center;
+}
+
+.logo-mark {
+	width: calc(var(--logo-size) * 68 / 48);
+	height: var(--logo-size);
+	flex-shrink: 0;
+	overflow: visible;
+}
+
+.logo-mark-frame {
+	stroke: var(--logo-blue);
+}
+
+.logo-mark-code {
+	stroke: var(--logo-blue);
+}
+
+.logo-mark-bolt {
+	fill: var(--logo-green);
+}
+
+.logo-text {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--logo-size) * 0.1);
+}
+
+.logo-stacked .logo-text {
+	align-items: center;
+}
+
+.logo-name {
+	font-size: calc(var(--logo-size) * 0.72);
+	font-weight: 800;
+	font-style: italic;
+	letter-spacing: -0.02em;
+}
+
+.logo-name-code {
+	color: var(--logo-ink);
+}
+
+.logo-name-fix {
+	color: var(--logo-blue);
+}
+
+.logo-express {
+	font-size: calc(var(--logo-size) * 0.26);
+	font-weight: 700;
+	letter-spacing: 0.42em;
+	color: var(--logo-green);
+	padding-left: 0.1em;
+}

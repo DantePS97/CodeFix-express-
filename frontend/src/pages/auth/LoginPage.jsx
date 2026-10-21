@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import Button from "../../components/Button/Button.jsx";
 import Input from "../../components/Input/Input.jsx";
+import Logo from "../../components/Logo/Logo.jsx";
 import { login } from "../../services/auth.service.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import "./Auth.css";
@@ -56,11 +57,21 @@ export default function LoginPage() {
 	return (
 		<div className="auth-page">
 			<form className="auth-form" onSubmit={manejarEnvio}>
-				<h1>Iniciar sesión</h1>
+				<div className="auth-brand">
+					<Logo variant="light" layout="stacked" size={56} />
+				</div>
+
+				<div className="auth-heading">
+					<h1>Bienvenido</h1>
+					<p>Inicia sesión para continuar</p>
+				</div>
 
 				<Input
 					id="correo"
 					label="Correo"
+					hideLabel
+					icon="user"
+					placeholder="Correo electrónico"
 					type="email"
 					value={correo}
 					onChange={(evento) => setCorreo(evento.target.value)}
@@ -69,6 +80,9 @@ export default function LoginPage() {
 				<Input
 					id="contrasena"
 					label="Contraseña"
+					hideLabel
+					icon="lock"
+					placeholder="Contraseña"
 					type="password"
 					value={contrasena}
 					onChange={(evento) => setContrasena(evento.target.value)}
@@ -77,13 +91,13 @@ export default function LoginPage() {
 
 				{error && <p className="form-error">{error}</p>}
 
-				<Button type="submit" disabled={cargando}>
+				<Button type="submit" className="btn-block" disabled={cargando}>
 					{cargando ? "Ingresando..." : "Ingresar"}
 				</Button>
 
 				<p className="auth-switch">
-					¿No tienes una cuenta?{" "}
-					<Link to="/registro-negocio">Registra tu negocio</Link>
+					¿Aún no tienes un negocio registrado?{" "}
+					<Link to="/registro-negocio">Regístralo</Link>
 				</p>
 			</form>
 		</div>

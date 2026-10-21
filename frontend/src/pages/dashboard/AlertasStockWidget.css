@@ -1,11 +1,36 @@
-.card ul {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-sm);
+.stock-alerts-title {
+	margin-bottom: var(--spacing-md);
+	font-size: var(--font-size-base);
+	font-weight: var(--font-weight-bold);
+	color: var(--color-primary-dark);
 }
 
-.card li {
+.stock-alerts-list {
+	display: flex;
+	flex-direction: column;
+}
+
+.stock-alerts-item {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-sm);
+	flex-wrap: wrap;
+	gap: var(--spacing-sm) var(--spacing-md);
+	padding: 0.7rem 0;
+	border-bottom: 1px solid var(--color-border);
+	font-size: var(--font-size-sm);
+}
+
+.stock-alerts-item:last-child {
+	border-bottom: none;
+	padding-bottom: 0;
+}
+
+.stock-alerts-name {
+	flex: 1;
+	min-width: 140px;
+	font-weight: var(--font-weight-medium);
+}
+
+.stock-alerts-stock {
+	color: var(--color-text-secondary);
 }

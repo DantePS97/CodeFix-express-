@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import Button from "../../components/Button/Button.jsx";
 import Input from "../../components/Input/Input.jsx";
+import Logo from "../../components/Logo/Logo.jsx";
 import { registrarNegocio } from "../../services/auth.service.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import "./Auth.css";
@@ -58,6 +59,9 @@ export default function RegisterBusinessPage() {
 		return (
 			<div className="auth-page">
 				<div className="auth-form auth-success">
+					<div className="auth-brand">
+						<Logo variant="light" layout="stacked" size={48} />
+					</div>
 					<h1>¡Negocio registrado!</h1>
 					<p>
 						Ya puedes iniciar sesión con el correo y la contraseña del
@@ -72,29 +76,40 @@ export default function RegisterBusinessPage() {
 	return (
 		<div className="auth-page">
 			<form className="auth-form" onSubmit={manejarEnvio}>
-				<h1>Registrar negocio</h1>
+				<div className="auth-brand">
+					<Logo variant="light" layout="stacked" size={48} />
+				</div>
+
+				<div className="auth-heading">
+					<h1>Registrar negocio</h1>
+					<p>Crea tu negocio y su cuenta de administrador</p>
+				</div>
 
 				<Input
 					id="nombre"
 					label="Nombre del negocio"
+					icon="home"
 					value={form.nombre}
 					onChange={actualizarCampo("nombre")}
 				/>
 				<Input
 					id="nit"
 					label="NIT"
+					icon="invoice"
 					value={form.nit}
 					onChange={actualizarCampo("nit")}
 				/>
 				<Input
 					id="adminNombre"
 					label="Nombre del administrador"
+					icon="user"
 					value={form.adminNombre}
 					onChange={actualizarCampo("adminNombre")}
 				/>
 				<Input
 					id="adminCorreo"
 					label="Correo del administrador"
+					icon="mail"
 					type="email"
 					value={form.adminCorreo}
 					onChange={actualizarCampo("adminCorreo")}
@@ -103,6 +118,7 @@ export default function RegisterBusinessPage() {
 				<Input
 					id="adminContrasena"
 					label="Contraseña"
+					icon="lock"
 					type="password"
 					value={form.adminContrasena}
 					onChange={actualizarCampo("adminContrasena")}
@@ -111,7 +127,7 @@ export default function RegisterBusinessPage() {
 
 				{error && <p className="form-error">{error}</p>}
 
-				<Button type="submit" disabled={cargando}>
+				<Button type="submit" className="btn-block" disabled={cargando}>
 					{cargando ? "Registrando..." : "Registrar negocio"}
 				</Button>
 

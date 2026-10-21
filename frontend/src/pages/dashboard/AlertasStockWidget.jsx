@@ -18,14 +18,16 @@ export default function AlertasStockWidget() {
 
 	return (
 		<Card>
-			<h2>Alertas de stock</h2>
+			<h2 className="stock-alerts-title">Alertas de stock</h2>
 			{productos.length === 0 ? (
 				<p className="text-muted">No hay productos con stock bajo.</p>
 			) : (
-				<ul>
+				<ul className="stock-alerts-list">
 					{productos.map((p) => (
-						<li key={p.id}>
-							{p.nombre} — stock {p.stock} <Badge variant="warning">Bajo mínimo ({p.stockMinimo})</Badge>
+						<li key={p.id} className="stock-alerts-item">
+							<span className="stock-alerts-name">{p.nombre}</span>
+							<span className="stock-alerts-stock">Stock {p.stock}</span>
+							<Badge variant="warning">Bajo mínimo ({p.stockMinimo})</Badge>
 						</li>
 					))}
 				</ul>

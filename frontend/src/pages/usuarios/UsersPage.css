@@ -1,16 +1,3 @@
-.users-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--spacing-md);
-	margin-bottom: var(--spacing-md);
-}
-
-.users-title {
-	margin: 0;
-	font-size: var(--font-size-xl);
-}
-
 .users-alert {
 	margin: 0 0 var(--spacing-md);
 	padding: var(--spacing-sm) var(--spacing-md);
@@ -42,12 +29,6 @@
 	margin-left: var(--spacing-sm);
 }
 
-.users-actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--spacing-sm);
-}
-
 .users-form {
 	display: flex;
 	flex-direction: column;
@@ -68,10 +49,4 @@
 	display: flex;
 	justify-content: flex-end;
 	gap: var(--spacing-sm);
-}
-
-@media (max-width: 480px) {
-	.users-header {
-		flex-wrap: wrap;
-	}
 }

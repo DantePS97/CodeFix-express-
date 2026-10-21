@@ -1,22 +1,15 @@
-.invoices-page {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-lg);
-}
-
-.invoices-page h1 {
-	margin: 0;
-}
-
 .invoices-filters {
 	display: flex;
-	flex-direction: column;
+	flex-wrap: wrap;
+	align-items: flex-end;
 	gap: var(--spacing-md);
+	width: 100%;
 }
 
 .invoices-filters-grid {
+	flex: 1;
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 	gap: var(--spacing-md);
 }
 
@@ -29,6 +22,10 @@
 	cursor: pointer;
 }
 
+.invoices-row:focus-visible {
+	outline-offset: -2px;
+}
+
 .invoice-detail {
 	display: flex;
 	flex-direction: column;
@@ -39,6 +36,9 @@
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
 	gap: var(--spacing-md);
+	padding: var(--spacing-md);
+	border-radius: var(--radius-md);
+	background-color: var(--color-background);
 }
 
 .invoice-detail-field {
@@ -68,6 +68,7 @@
 	padding-top: var(--spacing-sm);
 	border-top: 1px solid var(--color-border);
 	font-size: var(--font-size-lg);
+	color: var(--color-primary-dark);
 }
 
 .invoice-annul-form {

@@ -5,7 +5,9 @@ import { useProducts } from "../../hooks/useProducts";
 import { obtenerNegocioActual } from "../../services/business.service";
 
 import Card from "../../components/Card/Card";
-import Button from "../../components/Button/Button";
+import PageHeader from "../../components/PageHeader/PageHeader";
+import Table from "../../components/Table/Table";
+import Button, { IconButton } from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
 import Select from "../../components/Select/Select";
 
@@ -175,165 +177,169 @@ export default function NewInvoicesPage() {
 
 	return (
 		<div className="new-invoice-page">
-			<div className="page-header">
-				<h1>Nueva factura</h1>
-			</div>
+			<PageHeader title="Nueva factura" />
 
-			<Card>
-				<div className="invoice-form">
-					<Select
-						label="Cliente"
-						value={clienteId}
-						onChange={(e) =>
-							setClienteId(e.target.value)
-						}
-						options={opcionesClientes}
-						disabled={loadingClientes}
-					/>
+			<div className="new-invoice-grid">
+				<Card>
+					<h2 className="new-invoice-card-title">Datos de la venta</h2>
 
-					<div className="invoice-product-row">
+					<div className="invoice-form">
 						<Select
-							label="Producto"
-							value={productoId}
+							label="Cliente"
+							value={clienteId}
 							onChange={(e) =>
-								setProductoId(e.target.value)
+								setClienteId(e.target.value)
 							}
-							options={opcionesProductos}
-							disabled={loadingProductos}
+							options={opcionesClientes}
+							disabled={loadingClientes}
 						/>
 
-						<Input
-							label="Cantidad"
-							type="number"
-							min="1"
-							value={cantidad}
-							onChange={(e) =>
-								setCantidad(
-									Number(e.target.value)
-								)
-							}
-						/>
+						<div className="invoice-product-row">
+							<Select
+								label="Producto"
+								value={productoId}
+								onChange={(e) =>
+									setProductoId(e.target.value)
+								}
+								options={opcionesProductos}
+								disabled={loadingProductos}
+							/>
 
-						<Button onClick={agregarProducto}>
-							Agregar
-						</Button>
+							<Input
+								label="Cantidad"
+								type="number"
+								min="1"
+								value={cantidad}
+								onChange={(e) =>
+									setCantidad(
+										Number(e.target.value)
+									)
+								}
+							/>
+
+							<Button onClick={agregarProducto}>
+								Agregar
+							</Button>
+						</div>
 					</div>
-				</div>
-			</Card>
+				</Card>
 
-			<Card>
-				<h2>Carrito</h2>
+				<Card>
+					<h2 className="new-invoice-card-title">Carrito</h2>
 
-				<table className="invoice-table">
-					<thead>
-						<tr>
-							<th>Producto</th>
-							<th>Cantidad</th>
-							<th>Precio Unitario</th>
-							<th>Subtotal</th>
-							<th></th>
-						</tr>
-					</thead>
-
-					<tbody>
-						{carrito.map((item, index) => (
-							<tr key={`${item.productoId}-${index}`}>
-								<td>{item.nombre}</td>
-								<td>{item.cantidad}</td>
-								<td>
-									{formatearCentavos(item.precioCentavos)}
-								</td>
-								<td>
-									{formatearCentavos(
-										item.cantidad *
-										item.precioCentavos
-									)}
-								</td>
-								<td>
-									<Button
-										variant="danger"
-										onClick={() =>
-											eliminarProducto(index)
-										}
-									>
-										Quitar
-									</Button>
-								</td>
+					<Table>
+						<thead>
+							<tr>
+								<th>Producto</th>
+								<th className="cell-number">Cantidad</th>
+								<th className="cell-number">Precio Unitario</th>
+								<th className="cell-number">Subtotal</th>
+								<th>Acciones</th>
 							</tr>
-						))}
-					</tbody>
-				</table>
+						</thead>
 
-				{carrito.length === 0 && (
-					<p>No hay productos agregados.</p>
-				)}
-			</Card>
+						<tbody>
+							{carrito.map((item, index) => (
+								<tr key={`${item.productoId}-${index}`}>
+									<td>{item.nombre}</td>
+									<td className="cell-number">{item.cantidad}</td>
+									<td className="cell-number">
+										{formatearCentavos(item.precioCentavos)}
+									</td>
+									<td className="cell-number">
+										{formatearCentavos(
+											item.cantidad *
+											item.precioCentavos
+										)}
+									</td>
+									<td>
+										<div className="table-actions">
+											<IconButton
+												icon="trash"
+												label={`Quitar ${item.nombre}`}
+												variant="danger"
+												onClick={() =>
+													eliminarProducto(index)
+												}
+											/>
+										</div>
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</Table>
 
-			<Card>
-				<div className="invoice-summary">
-					<div>
-						<span>Subtotal:</span>
-						<strong>
-							{formatearCentavos(subtotal)}
-						</strong>
-					</div>
-
-					{impuesto !== null && (
-						<>
-							<div>
-								<span>Impuesto (IVA {Number(tarifaIva)}%):</span>
-								<strong>
-									{formatearCentavos(impuesto)}
-								</strong>
-							</div>
-
-							<div className="invoice-total">
-								<span>Total:</span>
-								<strong>
-									{formatearCentavos(total)}
-								</strong>
-							</div>
-						</>
+					{carrito.length === 0 && (
+						<p className="module-empty">No hay productos agregados.</p>
 					)}
-				</div>
 
-				{!cargandoTarifa && impuesto === null && (
-					<p className="text-muted invoice-note">
-						No se pudo cargar la tarifa de IVA: el servidor calculará el IVA y el total al confirmar la factura.
-					</p>
-				)}
+					<div className="invoice-summary">
+						<div>
+							<span>Subtotal:</span>
+							<strong>
+								{formatearCentavos(subtotal)}
+							</strong>
+						</div>
 
-				{errorFactura && (
-					<p className="form-error invoice-note">{errorFactura}</p>
-				)}
+						{impuesto !== null && (
+							<>
+								<div>
+									<span>Impuesto (IVA {Number(tarifaIva)}%):</span>
+									<strong>
+										{formatearCentavos(impuesto)}
+									</strong>
+								</div>
 
-				<Button
-					onClick={confirmarFactura}
-					disabled={
-						guardando || carrito.length === 0
-					}
-				>
-					{guardando
-						? "Generando..."
-						: "Confirmar factura"}
-				</Button>
-
-				{facturaEmitida && (
-					<div className="invoice-success">
-						Factura generada correctamente.
-						<br />
-						<strong>
-							Número: #{facturaEmitida.numero}
-						</strong>
-						<br />
-						Subtotal: {formatearDinero(facturaEmitida.subtotal)}
-						<br />
-						IVA: {formatearDinero(facturaEmitida.impuesto)}
-						<br />
-						Total: {formatearDinero(facturaEmitida.total)}
+								<div className="invoice-total">
+									<span>Total:</span>
+									<strong>
+										{formatearCentavos(total)}
+									</strong>
+								</div>
+							</>
+						)}
 					</div>
-				)}
-			</Card>
+
+					{!cargandoTarifa && impuesto === null && (
+						<p className="text-muted invoice-note">
+							No se pudo cargar la tarifa de IVA: el servidor calculará el IVA y el total al confirmar la factura.
+						</p>
+					)}
+
+					{errorFactura && (
+						<p className="form-error invoice-note">{errorFactura}</p>
+					)}
+
+					<Button
+						variant="success"
+						className="btn-block"
+						onClick={confirmarFactura}
+						disabled={
+							guardando || carrito.length === 0
+						}
+					>
+						{guardando
+							? "Generando..."
+							: "Confirmar factura"}
+					</Button>
+
+					{facturaEmitida && (
+						<div className="invoice-success">
+							Factura generada correctamente.
+							<br />
+							<strong>
+								Número: #{facturaEmitida.numero}
+							</strong>
+							<br />
+							Subtotal: {formatearDinero(facturaEmitida.subtotal)}
+							<br />
+							IVA: {formatearDinero(facturaEmitida.impuesto)}
+							<br />
+							Total: {formatearDinero(facturaEmitida.total)}
+						</div>
+					)}
+				</Card>
+			</div>
 		</div>
 	);
 }

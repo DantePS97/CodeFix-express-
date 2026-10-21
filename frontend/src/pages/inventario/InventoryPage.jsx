@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useInventory } from "../../hooks/useInventory.js";
 import { useProducts } from "../../hooks/useProducts.js";
+import Card from "../../components/Card/Card.jsx";
+import PageHeader from "../../components/PageHeader/PageHeader.jsx";
 import Table from "../../components/Table/Table.jsx";
+import Badge from "../../components/Badge/Badge.jsx";
 import Modal from "../../components/Modal/Modal.jsx";
 import Select from "../../components/Select/Select.jsx";
 import Button from "../../components/Button/Button.jsx";
@@ -15,6 +18,12 @@ const TIPOS_ADMIN = [
 	{ value: "AJUSTE", label: "Ajuste" },
 ];
 const TIPOS_VENDEDOR = [{ value: "SALIDA", label: "Salida" }];
+
+const PILL_TIPO = {
+	ENTRADA: { variant: "success", label: "Entrada" },
+	SALIDA: { variant: "danger", label: "Salida" },
+	AJUSTE: { variant: "info", label: "Ajuste" },
+};
 
 export default function InventoryPage() {
 	const { usuario } = useAuth();
@@ -68,26 +77,25 @@ export default function InventoryPage() {
 	const opcionesProductos = productos.map((p) => ({ value: p.id, label: p.nombre }));
 
 	return (
-		<div>
-			<div className="inventory-toolbar">
-				<h1>Inventario</h1>
+		<Card>
+			<PageHeader title="Inventario">
 				<Button onClick={abrirModal}>+ Nuevo movimiento</Button>
-			</div>
+			</PageHeader>
 
 			{puedeVerHistorial ? (
 				<>
 					{error && <p className="form-error">{error}</p>}
 					{cargando ? (
-						<p>Cargando...</p>
+						<p className="module-empty">Cargando...</p>
 					) : (
 						<Table>
 							<thead>
 								<tr>
 									<th>Producto</th>
 									<th>Tipo</th>
-									<th>Cantidad</th>
-									<th>Stock anterior</th>
-									<th>Stock nuevo</th>
+									<th className="cell-number">Cantidad</th>
+									<th className="cell-number">Stock anterior</th>
+									<th className="cell-number">Stock nuevo</th>
 									<th>Motivo</th>
 									<th>Fecha</th>
 								</tr>
@@ -96,12 +104,22 @@ export default function InventoryPage() {
 								{movimientos.map((m) => (
 									<tr key={m.id}>
 										<td>{m.producto?.nombre ?? productos.find((p) => p.id === m.productoId)?.nombre ?? m.productoId}</td>
-										<td>{m.tipo}</td>
-										<td>{m.cantidad}</td>
-										<td>{m.stockAnterior}</td>
-										<td>{m.stockNuevo}</td>
+										<td>
+											<Badge variant={PILL_TIPO[m.tipo]?.variant ?? "neutral"}>{PILL_TIPO[m.tipo]?.label ?? m.tipo}</Badge>
+										</td>
+										<td className="cell-number">{m.cantidad}</td>
+										<td className="cell-number">{m.stockAnterior}</td>
+										<td className="cell-number">{m.stockNuevo}</td>
 										<td>{m.motivo || "—"}</td>
-										<td>{new Date(m.fechaMovimiento).toLocaleString("es-CO")}</td>
+										<td className="cell-date">
+											{new Date(m.fechaMovimiento).toLocaleString("es-CO", {
+												day: "2-digit",
+												month: "2-digit",
+												year: "numeric",
+												hour: "2-digit",
+												minute: "2-digit",
+											})}
+										</td>
 									</tr>
 								))}
 							</tbody>
@@ -109,7 +127,7 @@ export default function InventoryPage() {
 					)}
 				</>
 			) : (
-				<p className="text-muted">Como VENDEDOR puedes registrar salidas, pero no ver el historial completo.</p>
+				<p className="module-empty">Como VENDEDOR puedes registrar salidas, pero no ver el historial completo.</p>
 			)}
 
 			<Modal open={modalAbierto} onClose={() => setModalAbierto(false)} title="Nuevo movimiento">
@@ -138,6 +156,6 @@ export default function InventoryPage() {
 					<Button type="submit">Guardar</Button>
 				</form>
 			</Modal>
-		</div>
+		</Card>
 	);
 }
