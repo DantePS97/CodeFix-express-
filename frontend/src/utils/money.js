@@ -1,5 +1,23 @@
+// Pesos colombianos (es-CO): "$ 2.936.920". Los montos enteros se muestran sin
+// decimales; si el monto trae centavos se muestran los dos ("$ 12,50"), para
+// que lo que ve el usuario nunca oculte un valor que el backend sí guarda.
+const FORMATO_ENTERO = new Intl.NumberFormat("es-CO", {
+	style: "currency",
+	currency: "COP",
+	minimumFractionDigits: 0,
+	maximumFractionDigits: 0,
+});
+const FORMATO_CON_CENTAVOS = new Intl.NumberFormat("es-CO", {
+	style: "currency",
+	currency: "COP",
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2,
+});
+
 export function formatearDinero(valor) {
-	return `$${Number(valor).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+	const numero = Number(valor);
+	const tieneCentavos = Math.round(numero * 100) % 100 !== 0;
+	return (tieneCentavos ? FORMATO_CON_CENTAVOS : FORMATO_ENTERO).format(numero);
 }
 
 export function formatearCentavos(centavos) {

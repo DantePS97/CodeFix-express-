@@ -188,7 +188,7 @@ export default function InvoicesPage() {
 							>
 								<td>#{f.numero}</td>
 								<td>{f.cliente?.nombre ?? "—"}</td>
-								<td>{new Date(f.createdAt).toLocaleDateString()}</td>
+								<td>{new Date(f.createdAt).toLocaleDateString("es-CO")}</td>
 								<td>{formatearDinero(f.total)}</td>
 								<td>
 									<Badge variant={f.estado === "EMITIDA" ? "success" : "neutral"}>
@@ -211,7 +211,7 @@ export default function InvoicesPage() {
 							</div>
 							<div className="invoice-detail-field">
 								<span>Fecha</span>
-								<strong>{new Date(seleccionada.createdAt).toLocaleString()}</strong>
+								<strong>{new Date(seleccionada.createdAt).toLocaleString("es-CO")}</strong>
 							</div>
 							<div className="invoice-detail-field">
 								<span>Estado</span>

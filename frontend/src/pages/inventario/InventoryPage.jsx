@@ -49,7 +49,7 @@ export default function InventoryPage() {
 		evento.preventDefault();
 		setErrorForm("");
 		if (form.cantidad === "") {
-			setErrorForm("Ingresá la cantidad.");
+			setErrorForm("Ingresa la cantidad.");
 			return;
 		}
 		try {
@@ -88,6 +88,7 @@ export default function InventoryPage() {
 									<th>Cantidad</th>
 									<th>Stock anterior</th>
 									<th>Stock nuevo</th>
+									<th>Motivo</th>
 									<th>Fecha</th>
 								</tr>
 							</thead>
@@ -99,7 +100,8 @@ export default function InventoryPage() {
 										<td>{m.cantidad}</td>
 										<td>{m.stockAnterior}</td>
 										<td>{m.stockNuevo}</td>
-										<td>{new Date(m.fechaMovimiento).toLocaleString()}</td>
+										<td>{m.motivo || "—"}</td>
+										<td>{new Date(m.fechaMovimiento).toLocaleString("es-CO")}</td>
 									</tr>
 								))}
 							</tbody>
@@ -107,7 +109,7 @@ export default function InventoryPage() {
 					)}
 				</>
 			) : (
-				<p className="text-muted">Como VENDEDOR podés registrar salidas, pero no ver el historial completo.</p>
+				<p className="text-muted">Como VENDEDOR puedes registrar salidas, pero no ver el historial completo.</p>
 			)}
 
 			<Modal open={modalAbierto} onClose={() => setModalAbierto(false)} title="Nuevo movimiento">
