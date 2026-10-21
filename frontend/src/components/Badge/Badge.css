@@ -1,10 +1,11 @@
 .badge {
 	display: inline-flex;
 	align-items: center;
-	padding: 2px var(--spacing-sm);
+	padding: 2px 0.65rem;
 	border-radius: var(--radius-pill);
 	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-medium);
+	font-weight: var(--font-weight-semibold);
+	line-height: 1.5;
 	white-space: nowrap;
 }
 
@@ -21,6 +22,11 @@
 .badge-danger {
 	background-color: var(--color-status-danger-bg);
 	color: var(--color-status-danger-text);
+}
+
+.badge-info {
+	background-color: var(--color-status-info-bg);
+	color: var(--color-status-info-text);
 }
 
 .badge-neutral {

@@ -1,7 +1,7 @@
 .modal-overlay {
 	position: fixed;
 	inset: 0;
-	background: rgba(15, 23, 42, 0.5);
+	background: rgba(0, 20, 60, 0.55);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -11,7 +11,7 @@
 
 .modal-content {
 	background: var(--color-white);
-	border-radius: var(--radius-md);
+	border-radius: var(--radius-lg);
 	box-shadow: var(--shadow-lg);
 	padding: var(--spacing-xl);
 	width: 100%;
@@ -22,4 +22,50 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-md);
+}
+
+.modal-content > h2 {
+	font-size: var(--font-size-lg);
+	color: var(--color-primary-dark);
+}
+
+/* Detalles con tabla (p. ej. detalle de factura). */
+.modal-wide {
+	max-width: 640px;
+}
+
+/* Confirmaciones breves (p. ej. cerrar sesión): icono arriba, texto centrado. */
+.modal-confirm {
+	max-width: 400px;
+	align-items: center;
+	text-align: center;
+	gap: var(--spacing-sm);
+}
+
+.modal-confirm-icon {
+	order: -1;
+	display: grid;
+	place-items: center;
+	width: 56px;
+	height: 56px;
+	margin-bottom: var(--spacing-xs);
+	border-radius: var(--radius-pill);
+	background-color: var(--color-primary-soft);
+	color: var(--color-primary);
+}
+
+.modal-confirm-text {
+	color: var(--color-text-secondary);
+	font-size: var(--font-size-sm);
+}
+
+.modal-confirm-actions {
+	display: flex;
+	gap: var(--spacing-sm);
+	width: 100%;
+	margin-top: var(--spacing-md);
+}
+
+.modal-confirm-actions > * {
+	flex: 1;
 }

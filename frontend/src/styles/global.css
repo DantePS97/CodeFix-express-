@@ -54,3 +54,46 @@ a:hover {
 	font-size: var(--font-size-sm);
 	margin: 0;
 }
+
+/* Texto solo para lectores de pantalla (etiquetas que se ocultan visualmente). */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* Mensaje de error de formulario / pantalla (rojo suave, legible sobre fondos claros). */
+.form-error {
+	color: var(--color-danger);
+	font-size: var(--font-size-sm);
+	margin: 0;
+}
+
+/* Barra de filtros de las pantallas de módulo (búsqueda, selects). */
+.module-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: var(--spacing-md);
+	margin-bottom: var(--spacing-md);
+}
+
+/* Mensajes vacíos / de carga dentro de una tarjeta. */
+.module-empty {
+	padding: var(--spacing-xl) var(--spacing-md);
+	text-align: center;
+	color: var(--color-text-secondary);
+	font-size: var(--font-size-sm);
+}
+
+/* Foco visible coherente para controles que no son inputs. */
+:focus-visible {
+	outline: 2px solid var(--color-primary-light);
+	outline-offset: 2px;
+}
