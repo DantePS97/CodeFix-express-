@@ -34,12 +34,20 @@ export async function listar(tenantId, { nombre, categoriaId, incluirInactivos =
 	});
 }
 
+function recortarTextos(datos) {
+	return {
+		...datos,
+		...(datos.nombre !== undefined ? { nombre: datos.nombre.trim() } : {}),
+		...(datos.codigo !== undefined ? { codigo: datos.codigo.trim() } : {}),
+	};
+}
+
 export async function crear(tenantId, datos) {
 	await verificarCategoria(tenantId, datos.categoriaId);
 
 	try {
 		return await prisma.producto.create({
-			data: { ...pick(datos, CAMPOS_CREAR), tenantId },
+			data: { ...recortarTextos(pick(datos, CAMPOS_CREAR)), tenantId },
 		});
 	} catch (error) {
 		if (error.code === "P2002") {
@@ -59,10 +67,17 @@ export async function actualizar(tenantId, productoId, cambios) {
 		await verificarCategoria(tenantId, cambios.categoriaId);
 	}
 
-	return prisma.producto.update({
-		where: { id: productoId },
-		data: pick(cambios, CAMPOS_ACTUALIZAR),
-	});
+	try {
+		return await prisma.producto.update({
+			where: { id: productoId },
+			data: recortarTextos(pick(cambios, CAMPOS_ACTUALIZAR)),
+		});
+	} catch (error) {
+		if (error.code === "P2002") {
+			throw new ConflictError("Ya existe un producto con ese código en este negocio.", "CODIGO_DUPLICADO");
+		}
+		throw error;
+	}
 }
 
 // Usado por la tarjeta [Sprint 2 - 05] (RF-008).

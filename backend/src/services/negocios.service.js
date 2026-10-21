@@ -30,8 +30,8 @@ export async function registrarNegocioConAdmin({
 		return await prisma.$transaction(async (tx) => {
 			const negocio = await tx.negocio.create({
 				data: {
-					nombre,
-					nit,
+					nombre: nombre.trim(),
+					nit: nit.trim(),
 					...(tarifaIvaDefault !== undefined ? { tarifaIvaDefault } : {}),
 				},
 			});
@@ -39,7 +39,7 @@ export async function registrarNegocioConAdmin({
 			const usuario = await tx.usuario.create({
 				data: {
 					tenantId: negocio.id,
-					nombre: adminNombre,
+					nombre: adminNombre.trim(),
 					correo: adminCorreo,
 					contraseñaHash,
 					rol: "ADMIN",
