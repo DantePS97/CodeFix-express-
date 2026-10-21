@@ -6,11 +6,19 @@ import { ConflictError, NotFoundError, ValidationError } from "../utils/errors.j
 // consulta (DDS 5.3).
 
 const MAX_INTENTOS_NUMERO = 5;
+const TOTAL_MAXIMO = new Prisma.Decimal("9999999999.99");
 
 const INCLUIR_DETALLE = {
 	cliente: true,
 	detalles: { include: { producto: { select: { id: true, nombre: true, codigo: true } } } },
 };
+
+function stockInsuficiente(nombre, cantidad) {
+	return new ConflictError(
+		`El producto "${nombre}" no tiene existencias suficientes (solicitado: ${cantidad}).`,
+		"STOCK_INSUFICIENTE",
+	);
+}
 
 // Ventas simultáneas calculan el mismo número: la restricción única deja pasar una y las demás reintentan.
 export async function crear(tenantId, usuarioId, datos) {
@@ -49,7 +57,7 @@ async function emitir(tenantId, usuarioId, { clienteId, lineas }) {
 		// Orden fijo por productoId para tomar los locks de fila siempre en el mismo orden.
 		const lineasOrdenadas = [...lineas].sort((a, b) => a.productoId - b.productoId);
 		const detalles = [];
-		const movimientos = [];
+		const nombres = new Map();
 
 		for (const { productoId, cantidad } of lineasOrdenadas) {
 			const producto = await tx.producto.findFirst({ where: { id: productoId, tenantId } });
@@ -60,38 +68,18 @@ async function emitir(tenantId, usuarioId, { clienteId, lineas }) {
 				throw new ValidationError(`El producto "${producto.nombre}" está inactivo.`);
 			}
 
-			// Decremento condicional atómico: evita sobreventa entre ventas concurrentes.
-			const { count } = await tx.producto.updateMany({
-				where: { id: productoId, tenantId, stock: { gte: cantidad } },
-				data: { stock: { decrement: cantidad } },
-			});
-			if (count === 0) {
-				throw new ConflictError(
-					`El producto "${producto.nombre}" no tiene existencias suficientes (solicitado: ${cantidad}).`,
-					"STOCK_INSUFICIENTE",
-				);
+			// Chequeo previo para fallar sin escribir; el decremento condicional de abajo sigue siendo el que decide.
+			if (producto.stock < cantidad) {
+				throw stockInsuficiente(producto.nombre, cantidad);
 			}
 
-			// Se relee tras el UPDATE: la primera lectura puede estar desactualizada por ventas concurrentes.
-			const { stock: stockNuevo } = await tx.producto.findFirst({
-				where: { id: productoId, tenantId },
-				select: { stock: true },
-			});
-
+			nombres.set(productoId, producto.nombre);
 			const precioUnitario = producto.precio;
 			detalles.push({
 				productoId,
 				cantidad,
 				precioUnitario,
 				subtotalLinea: precioUnitario.mul(cantidad),
-			});
-			movimientos.push({
-				tenantId,
-				productoId,
-				tipo: "SALIDA",
-				cantidad,
-				stockAnterior: stockNuevo + cantidad,
-				stockNuevo,
 			});
 		}
 
@@ -101,6 +89,38 @@ async function emitir(tenantId, usuarioId, { clienteId, lineas }) {
 			.div(100)
 			.toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
 		const total = subtotal.add(impuesto);
+
+		// Decimal(12,2): se rechaza antes de tocar el stock en vez de fallar al escribir.
+		if (total.gt(TOTAL_MAXIMO)) {
+			throw new ValidationError("El total de la factura supera el máximo permitido.");
+		}
+
+		const movimientos = [];
+		for (const { productoId, cantidad } of detalles) {
+			// Decremento condicional atómico: evita sobreventa entre ventas concurrentes.
+			const { count } = await tx.producto.updateMany({
+				where: { id: productoId, tenantId, stock: { gte: cantidad } },
+				data: { stock: { decrement: cantidad } },
+			});
+			if (count === 0) {
+				throw stockInsuficiente(nombres.get(productoId), cantidad);
+			}
+
+			// Se relee tras el UPDATE: la primera lectura puede estar desactualizada por ventas concurrentes.
+			const { stock: stockNuevo } = await tx.producto.findFirst({
+				where: { id: productoId, tenantId },
+				select: { stock: true },
+			});
+
+			movimientos.push({
+				tenantId,
+				productoId,
+				tipo: "SALIDA",
+				cantidad,
+				stockAnterior: stockNuevo + cantidad,
+				stockNuevo,
+			});
+		}
 
 		const ultima = await tx.factura.findFirst({
 			where: { tenantId },

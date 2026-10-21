@@ -17,7 +17,7 @@ export function validarCrearCliente(body) {
 
 	if (!nombre || typeof nombre !== "string" || !nombre.trim()) {
 		errores.push("El nombre del cliente es obligatorio.");
-	} else if (nombre.length > 150) {
+	} else if (nombre.trim().length > 150) {
 		errores.push("El nombre del cliente no puede superar los 150 caracteres.");
 	}
 	validarCamposOpcionales(body ?? {}, errores);
@@ -35,7 +35,7 @@ export function validarActualizarCliente(body) {
 	if (nombre !== undefined) {
 		if (typeof nombre !== "string" || !nombre.trim()) {
 			errores.push("El nombre del cliente no puede estar vacío.");
-		} else if (nombre.length > 150) {
+		} else if (nombre.trim().length > 150) {
 			errores.push("El nombre del cliente no puede superar los 150 caracteres.");
 		}
 	}

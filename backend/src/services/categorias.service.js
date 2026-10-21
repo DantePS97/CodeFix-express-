@@ -9,7 +9,7 @@ import { pick } from "../utils/pick.js";
 export async function crearCategoria(tenantId, datos) {
 	try {
 		return await prisma.categoriaProducto.create({
-			data: { ...pick(datos, ["nombre", "descripcion"]), tenantId },
+			data: { ...pick(datos, ["nombre", "descripcion"]), nombre: datos.nombre.trim(), tenantId },
 		});
 	} catch (error) {
 		if (error.code === "P2002") {

@@ -1,6 +1,7 @@
 import { validarCrearFactura, validarAnularFactura, leerFiltrosFacturas } from "../validators/facturas.validator.js";
 import { crear as crearFactura, listar as listarFacturas, obtenerPorId, anular as anularFactura } from "../services/facturas.service.js";
-import { NotFoundError, ValidationError } from "../utils/errors.js";
+import { ValidationError } from "../utils/errors.js";
+import { leerIdRuta } from "../utils/query.js";
 
 export async function crear(req, res, next) {
 	try {
@@ -28,10 +29,7 @@ export async function listar(req, res, next) {
 
 export async function obtener(req, res, next) {
 	try {
-		const facturaId = Number(req.params.id);
-		if (!Number.isInteger(facturaId)) {
-			throw new NotFoundError("Factura no encontrada.");
-		}
+		const facturaId = leerIdRuta(req.params.id, "Factura no encontrada.");
 		const factura = await obtenerPorId(req.tenantId, facturaId);
 		res.status(200).json({ factura });
 	} catch (error) {
@@ -41,10 +39,7 @@ export async function obtener(req, res, next) {
 
 export async function anular(req, res, next) {
 	try {
-		const facturaId = Number(req.params.id);
-		if (!Number.isInteger(facturaId) || facturaId <= 0) {
-			throw new NotFoundError("Factura no encontrada.");
-		}
+		const facturaId = leerIdRuta(req.params.id, "Factura no encontrada.");
 		const errores = validarAnularFactura(req.body);
 		if (errores.length > 0) {
 			throw new ValidationError(errores.join(" "));

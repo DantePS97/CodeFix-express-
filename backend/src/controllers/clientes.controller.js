@@ -1,7 +1,7 @@
 import { validarCrearCliente, validarActualizarCliente } from "../validators/clientes.validator.js";
 import { listar as listarClientes, crear as crearCliente, actualizar as actualizarCliente } from "../services/clientes.service.js";
-import { NotFoundError, ValidationError } from "../utils/errors.js";
-import { leerTexto } from "../utils/query.js";
+import { ValidationError } from "../utils/errors.js";
+import { leerIdRuta, leerTexto } from "../utils/query.js";
 
 export async function listar(req, res, next) {
 	try {
@@ -32,10 +32,7 @@ export async function actualizar(req, res, next) {
 		if (errores.length > 0) {
 			throw new ValidationError(errores.join(" "));
 		}
-		const clienteId = Number(req.params.id);
-		if (!Number.isInteger(clienteId)) {
-			throw new NotFoundError("Cliente no encontrado.");
-		}
+		const clienteId = leerIdRuta(req.params.id, "Cliente no encontrado.");
 		const cliente = await actualizarCliente(req.tenantId, clienteId, req.body);
 		res.status(200).json({ cliente });
 	} catch (error) {

@@ -13,6 +13,8 @@ import { errorHandler } from "./middlewares/error.middleware.js";
 
 const app = express();
 
+app.disable("x-powered-by");
+
 app.use(cors());
 app.use(express.json());
 
@@ -31,6 +33,10 @@ app.use("/api/inventario", inventarioRoutes);
 app.use("/api/clientes", clientesRoutes);
 app.use("/api/facturas", facturasRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+
+app.use((req, res) => {
+	res.status(404).json({ error: { codigo: "RUTA_NO_ENCONTRADA", mensaje: "La ruta solicitada no existe." } });
+});
 
 // Debe ir al final: captura los errores que `next(err)` propaga desde
 // cualquier ruta o middleware anterior.

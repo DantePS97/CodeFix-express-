@@ -1,6 +1,15 @@
-import { ValidationError } from "./errors.js";
+import { NotFoundError, ValidationError } from "./errors.js";
 
-const MAX_INT = 2147483647;
+export const MAX_INT = 2147483647;
+
+// Un :id que no es un entero positivo de Int32 nunca puede existir: se responde 404, no 500.
+export function leerIdRuta(valor, mensajeNoEncontrado) {
+	const numero = typeof valor === "string" && /^\d+$/.test(valor) ? Number(valor) : 0;
+	if (numero <= 0 || numero > MAX_INT) {
+		throw new NotFoundError(mensajeNoEncontrado);
+	}
+	return numero;
+}
 
 // Devuelve undefined si el parámetro no vino o llegó vacío; rechaza arrays y objetos (?a[]=1, ?a[b]=1).
 export function leerTexto(valor, nombre) {

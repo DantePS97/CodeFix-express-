@@ -1,5 +1,5 @@
 import { ValidationError } from "../utils/errors.js";
-import { leerEnteroPositivo, leerFecha, leerTexto } from "../utils/query.js";
+import { MAX_INT, leerEnteroPositivo, leerFecha, leerTexto } from "../utils/query.js";
 
 const ESTADOS = ["EMITIDA", "ANULADA"];
 const MOTIVO_MAX = 255;
@@ -65,7 +65,7 @@ export function validarCrearFactura(body) {
 			productosVistos.add(productoId);
 		}
 
-		if (!Number.isInteger(cantidad) || cantidad <= 0) {
+		if (!Number.isSafeInteger(cantidad) || cantidad <= 0 || cantidad > MAX_INT) {
 			errores.push(`Línea ${numeroLinea}: la cantidad debe ser un entero mayor a 0.`);
 		}
 	});
