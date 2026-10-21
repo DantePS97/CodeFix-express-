@@ -18,7 +18,7 @@ export async function crearUsuario(tenantId, { nombre, correo, contrasena, rol }
 
 	try {
 		const usuario = await prisma.usuario.create({
-			data: { tenantId, nombre, correo, contraseñaHash, rol },
+			data: { tenantId, nombre: nombre.trim(), correo, contraseñaHash, rol },
 		});
 		return sanear(usuario);
 	} catch (error) {
@@ -30,17 +30,32 @@ export async function crearUsuario(tenantId, { nombre, correo, contrasena, rol }
 }
 
 export async function actualizarUsuario(tenantId, usuarioId, cambios) {
-	const usuario = await prisma.usuario.findFirst({ where: { id: usuarioId, tenantId } });
-	if (!usuario) {
-		throw new NotFoundError("Usuario no encontrado.");
-	}
+	const actualizado = await prisma.$transaction(async (tx) => {
+		// Se bloquean todos los usuarios del negocio en orden de id: dos cambios simultáneos se serializan y el segundo ve el resultado del primero.
+		const usuarios = await tx.$queryRaw`SELECT id, rol, activo FROM Usuario WHERE tenantId = ${tenantId} ORDER BY id FOR UPDATE`;
+		const usuario = usuarios.find((u) => u.id === usuarioId);
+		if (!usuario) {
+			throw new NotFoundError("Usuario no encontrado.");
+		}
 
-	const actualizado = await prisma.usuario.update({
-		where: { id: usuarioId },
-		data: {
-			...(cambios.rol !== undefined ? { rol: cambios.rol } : {}),
-			...(cambios.activo !== undefined ? { activo: cambios.activo } : {}),
-		},
+		const esAdminActivo = (u) => u.rol === "ADMIN" && Boolean(u.activo);
+		const dejaDeSerAdmin =
+			esAdminActivo(usuario) &&
+			(cambios.activo === false || (cambios.rol !== undefined && cambios.rol !== "ADMIN"));
+		if (dejaDeSerAdmin && usuarios.filter(esAdminActivo).length === 1) {
+			throw new ConflictError(
+				"No se puede desactivar ni quitar el rol de administrador al último administrador activo del negocio.",
+				"ULTIMO_ADMIN",
+			);
+		}
+
+		return tx.usuario.update({
+			where: { id: usuarioId },
+			data: {
+				...(cambios.rol !== undefined ? { rol: cambios.rol } : {}),
+				...(cambios.activo !== undefined ? { activo: cambios.activo } : {}),
+			},
+		});
 	});
 
 	return sanear(actualizado);
