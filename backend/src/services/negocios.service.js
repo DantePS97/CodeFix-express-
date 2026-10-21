@@ -1,8 +1,20 @@
 import prisma from "../config/prisma.js";
 import { hashPassword } from "../utils/hash.js";
+import { NotFoundError } from "../utils/errors.js";
 
 export class NitDuplicadoError extends Error {}
 export class CorreoDuplicadoError extends Error {}
+
+export async function obtenerNegocioActual(tenantId) {
+	const negocio = await prisma.negocio.findUnique({
+		where: { id: tenantId },
+		select: { id: true, nombre: true, tarifaIvaDefault: true },
+	});
+	if (!negocio) {
+		throw new NotFoundError("Negocio no encontrado.");
+	}
+	return negocio;
+}
 
 export async function registrarNegocioConAdmin({
 	nombre,

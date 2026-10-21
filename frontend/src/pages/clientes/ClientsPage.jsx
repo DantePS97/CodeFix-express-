@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useClients } from "../../hooks/useClients";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 
 import Table from "../../components/Table/Table";
 import Card from "../../components/Card/Card";
@@ -11,54 +12,42 @@ import "./ClientsPage.css";
 
 const estadoInicial = {
   nombre: "",
-  documento: "",
-  telefono: "",
-  email: "",
-  direccion: "",
+  identificacion: "",
+  contacto: "",
 };
 
 const ClientsPage = () => {
   const [busqueda, setBusqueda] = useState("");
-
-
-  const { clientes, loading, crear, actualizar } = useClients();
+  const nombre = useDebouncedValue(busqueda.trim(), 300);
+  const { clientes, loading, error, crear, actualizar } = useClients({ nombre });
 
   const [modalOpen, setModalOpen] = useState(false);
   const [clienteActual, setClienteActual] = useState(null);
   const [formulario, setFormulario] = useState(estadoInicial);
+  const [errorForm, setErrorForm] = useState("");
 
   useEffect(() => {
     if (clienteActual) {
       setFormulario({
         nombre: clienteActual.nombre || "",
-        documento: clienteActual.documento || "",
-        telefono: clienteActual.telefono || "",
-        email: clienteActual.email || "",
-        direccion: clienteActual.direccion || "",
+        identificacion: clienteActual.identificacion || "",
+        contacto: clienteActual.contacto || "",
       });
     } else {
       setFormulario(estadoInicial);
     }
   }, [clienteActual]);
 
-  useEffect(() => {
-  const timeout = setTimeout(() => {
-    recargar({
-      nombre: busqueda,
-    });
-  }, 400);
-
-  return () => clearTimeout(timeout);
-}, [busqueda, recargar]);
-
   const abrirCrear = () => {
     setClienteActual(null);
     setFormulario(estadoInicial);
+    setErrorForm("");
     setModalOpen(true);
   };
 
   const abrirEditar = (cliente) => {
     setClienteActual(cliente);
+    setErrorForm("");
     setModalOpen(true);
   };
 
@@ -66,6 +55,7 @@ const ClientsPage = () => {
     setModalOpen(false);
     setClienteActual(null);
     setFormulario(estadoInicial);
+    setErrorForm("");
   };
 
   const handleChange = (e) => {
@@ -79,6 +69,7 @@ const ClientsPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorForm("");
 
     try {
       if (clienteActual) {
@@ -88,8 +79,8 @@ const ClientsPage = () => {
       }
 
       cerrarModal();
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      setErrorForm(err.response?.data?.error?.mensaje ?? "No se pudo guardar el cliente.");
     }
   };
 
@@ -100,19 +91,11 @@ const ClientsPage = () => {
     },
     {
       header: "Documento",
-      accessor: "documento",
+      accessor: "identificacion",
     },
     {
-      header: "Teléfono",
-      accessor: "telefono",
-    },
-    {
-      header: "Correo",
-      accessor: "email",
-    },
-    {
-      header: "Dirección",
-      accessor: "direccion",
+      header: "Contacto",
+      accessor: "contacto",
     },
     {
       header: "Acciones",
@@ -133,27 +116,60 @@ const ClientsPage = () => {
           + Nuevo cliente
         </Button>
       </div>
-<div className="clients-search">
-  <Input
-    placeholder="Buscar cliente..."
-    value={busqueda}
-    onChange={(e) =>
-      setBusqueda(e.target.value)
-    }
-  />
-</div>
-
 
       <Card>
-        <Table
-          columns={columnas}
-          data={clientes}
-          loading={loading}
-        />
+        <div className="clients-search">
+          <Input
+            id="busquedaClientes"
+            label="Buscar"
+            placeholder="Nombre o documento"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+        </div>
+
+        {error && (
+          <p className="form-error">
+            {error.response?.data?.error?.mensaje ?? "No se pudieron cargar los clientes."}
+          </p>
+        )}
+
+        {loading ? (
+          <p>Cargando...</p>
+        ) : clientes.length === 0 ? (
+          <p>
+            {nombre
+              ? "No se encontraron clientes con esa búsqueda."
+              : "No hay clientes registrados."}
+          </p>
+        ) : (
+          <Table>
+            <thead>
+              <tr>
+                {columnas.map((columna) => (
+                  <th key={columna.header}>{columna.header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {clientes.map((cliente) => (
+                <tr key={cliente.id}>
+                  {columnas.map((columna) => (
+                    <td key={columna.header}>
+                      {columna.cell
+                        ? columna.cell(cliente)
+                        : cliente[columna.accessor]}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
       </Card>
 
       <Modal
-        isOpen={modalOpen}
+        open={modalOpen}
         onClose={cerrarModal}
         title={
           clienteActual
@@ -175,33 +191,19 @@ const ClientsPage = () => {
 
           <Input
             label="Documento"
-            name="documento"
-            value={formulario.documento}
-            onChange={handleChange}
-            required
-          />
-
-          <Input
-            label="Teléfono"
-            name="telefono"
-            value={formulario.telefono}
+            name="identificacion"
+            value={formulario.identificacion}
             onChange={handleChange}
           />
 
           <Input
-            label="Correo"
-            name="email"
-            type="email"
-            value={formulario.email}
+            label="Contacto"
+            name="contacto"
+            value={formulario.contacto}
             onChange={handleChange}
           />
 
-          <Input
-            label="Dirección"
-            name="direccion"
-            value={formulario.direccion}
-            onChange={handleChange}
-          />
+          {errorForm && <p className="form-error">{errorForm}</p>}
 
           <div className="clients-form-actions">
             <Button

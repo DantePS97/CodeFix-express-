@@ -1,46 +1,83 @@
 .invoices-page {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-lg);
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.invoices-page h1 {
+	margin: 0;
 }
 
-.filters-card {
-  display: grid;
-  grid-template-columns:
-    repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  padding: 20px;
-  border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+.invoices-filters {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+}
+
+.invoices-filters-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: var(--spacing-md);
+}
+
+.invoices-filters-actions {
+	display: flex;
+	gap: var(--spacing-sm);
+}
+
+.invoices-row {
+	cursor: pointer;
 }
 
 .invoice-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
 }
 
-.invoice-info {
-  display: grid;
-  gap: 8px;
+.invoice-detail-info {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: var(--spacing-md);
 }
 
-.invoice-actions {
-  display: flex;
-  justify-content: flex-end;
+.invoice-detail-field {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-xs);
+	font-size: var(--font-size-sm);
 }
 
-.error-message {
-  padding: 12px;
-  border-radius: 8px;
-  background: #fee2e2;
-  color: #b91c1c;
+.invoice-detail-field > span {
+	color: var(--color-text-secondary);
+}
+
+.invoice-detail-totals {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+.invoice-detail-totals > div {
+	display: flex;
+	justify-content: space-between;
+}
+
+.invoice-detail-grand-total {
+	padding-top: var(--spacing-sm);
+	border-top: 1px solid var(--color-border);
+	font-size: var(--font-size-lg);
+}
+
+.invoice-annul-form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-md);
+}
+
+.invoice-detail-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--spacing-sm);
 }

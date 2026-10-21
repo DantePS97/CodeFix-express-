@@ -10,6 +10,11 @@
   align-items: center;
 }
 
+.clients-search {
+  max-width: 320px;
+  margin-bottom: 1rem;
+}
+
 .clients-form {
   display: flex;
   flex-direction: column;

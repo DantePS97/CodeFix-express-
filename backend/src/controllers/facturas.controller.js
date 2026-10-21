@@ -1,48 +1,57 @@
-export async function anular(req, res, next) {
-  try {
-    const { motivo } = req.body;
+import { validarCrearFactura, validarAnularFactura, leerFiltrosFacturas } from "../validators/facturas.validator.js";
+import { crear as crearFactura, listar as listarFacturas, obtenerPorId, anular as anularFactura } from "../services/facturas.service.js";
+import { NotFoundError, ValidationError } from "../utils/errors.js";
 
-    // Validar que el motivo sea obligatorio
-    if (typeof motivo !== "string" || motivo.trim().length === 0) {
-      return res.status(400).json({
-        message: "El motivo de anulación es obligatorio.",
-      });
-    }
-
-    const tenantId = req.user.tenantId;
-    const facturaId = req.params.id;
-
-    const factura = await facturasService.anular(
-      tenantId,
-      facturaId,
-      motivo.trim()
-    );
-
-    return res.status(200).json({
-      message: "Factura anulada correctamente.",
-      data: factura,
-    });
-  } catch (error) {
-    next(error);
-  }
+export async function crear(req, res, next) {
+	try {
+		const errores = validarCrearFactura(req.body);
+		if (errores.length > 0) {
+			throw new ValidationError(errores.join(" "));
+		}
+		const factura = await crearFactura(req.tenantId, req.user.id, req.body);
+		res.status(201).json({ factura });
+	} catch (error) {
+		next(error);
+	}
 }
+
 export async function listar(req, res, next) {
-  try {
-    const tenantId = req.user.tenantId;
+	try {
+		const { clienteId, estado, desde, hasta } = req.query;
+		const filtros = leerFiltrosFacturas({ clienteId, estado, desde, hasta });
+		const facturas = await listarFacturas(req.tenantId, filtros);
+		res.status(200).json({ facturas });
+	} catch (error) {
+		next(error);
+	}
+}
 
-    const filtros = {
-      clienteId: req.query.clienteId,
-      estado: req.query.estado,
-      desde: req.query.desde,
-      hasta: req.query.hasta,
-    };
+export async function obtener(req, res, next) {
+	try {
+		const facturaId = Number(req.params.id);
+		if (!Number.isInteger(facturaId)) {
+			throw new NotFoundError("Factura no encontrada.");
+		}
+		const factura = await obtenerPorId(req.tenantId, facturaId);
+		res.status(200).json({ factura });
+	} catch (error) {
+		next(error);
+	}
+}
 
-    const facturas = await facturasService.listar(tenantId, filtros);
-
-    return res.status(200).json({
-      data: facturas,
-    });
-  } catch (error) {
-    next(error);
-  }
+export async function anular(req, res, next) {
+	try {
+		const facturaId = Number(req.params.id);
+		if (!Number.isInteger(facturaId) || facturaId <= 0) {
+			throw new NotFoundError("Factura no encontrada.");
+		}
+		const errores = validarAnularFactura(req.body);
+		if (errores.length > 0) {
+			throw new ValidationError(errores.join(" "));
+		}
+		const factura = await anularFactura(req.tenantId, facturaId, req.body.motivo.trim());
+		res.status(200).json({ factura });
+	} catch (error) {
+		next(error);
+	}
 }

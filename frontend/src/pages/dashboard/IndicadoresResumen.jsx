@@ -1,76 +1,34 @@
 import { useEffect, useState } from "react";
+import { obtenerIndicadores } from "../../services/dashboard.service.js";
+import { StatCard } from "../../components/Card/Card.jsx";
+import { formatearDinero } from "../../utils/money.js";
 import "./IndicadoresResumen.css";
 
-import StatCard from "../../components/StatCard/StatCard";
-import { obtenerIndicadores } from "../../services/dashboard.service";
-
-function IndicadoresResumen() {
-  const [indicadores, setIndicadores] = useState({
-    ventasPeriodo: 0,
-    facturasEmitidas: 0,
-    alertasStock: 0,
-  });
-
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    cargarIndicadores();
-  }, []);
-
-  const cargarIndicadores = async () => {
-    try {
-      setLoading(true);
-
-      const data = await obtenerIndicadores();
-
-      setIndicadores({
-        ventasPeriodo:
-          data.ventasPeriodo ?? 0,
-        facturasEmitidas:
-          data.facturasEmitidas ?? 0,
-        alertasStock:
-          data.alertasStock ?? 0,
-      });
-    } catch (error) {
-      console.error(
-        "Error cargando indicadores",
-        error
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="indicadores-resumen">
-        Cargando indicadores...
-      </div>
-    );
-  }
-
-  return (
-    <div className="indicadores-resumen">
-      <StatCard
-        title="Ventas del período"
-        value={`$${Number(
-          indicadores.ventasPeriodo
-        ).toLocaleString()}`}
-      />
-
-      <StatCard
-        title="Facturas emitidas"
-        value={
-          indicadores.facturasEmitidas
-        }
-      />
-
-      <StatCard
-        title="Alertas de stock"
-        value={indicadores.alertasStock}
-      />
-    </div>
-  );
+function formatearFecha(fecha) {
+	const [anio, mes, dia] = fecha.split("-");
+	return `${dia}/${mes}/${anio}`;
 }
 
-export default IndicadoresResumen;
+export default function IndicadoresResumen() {
+	const [indicadores, setIndicadores] = useState(null);
+	const [error, setError] = useState("");
+
+	useEffect(() => {
+		obtenerIndicadores()
+			.then(setIndicadores)
+			.catch((err) => setError(err.response?.data?.error?.mensaje ?? "No se pudieron cargar los indicadores."));
+	}, []);
+
+	if (error) return <p className="form-error">{error}</p>;
+	if (!indicadores) return null;
+
+	const periodo = `Del ${formatearFecha(indicadores.periodo.desde)} al ${formatearFecha(indicadores.periodo.hasta)}`;
+
+	return (
+		<div className="indicadores-resumen">
+			<StatCard label="Ventas del período" value={formatearDinero(indicadores.ventasPeriodo)} helper={periodo} />
+			<StatCard label="Facturas emitidas" value={String(indicadores.facturasEmitidas)} helper={periodo} />
+			<StatCard label="Alertas de stock" value={String(indicadores.alertasStock)} helper="Productos bajo el mínimo" />
+		</div>
+	);
+}

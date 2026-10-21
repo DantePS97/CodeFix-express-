@@ -54,6 +54,10 @@
 	border-top: 1px solid #e5e7eb;
 }
 
+.invoice-note {
+	margin-bottom: 1rem;
+}
+
 .invoice-success {
 	margin-top: 1rem;
 	padding: 1rem;

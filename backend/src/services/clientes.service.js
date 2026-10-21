@@ -1,24 +1,43 @@
+import prisma from "../config/prisma.js";
+import { NotFoundError } from "../utils/errors.js";
+
+// Todo método recibe tenantId como primer parámetro y lo aplica en la
+// consulta (DDS 5.3). Los campos se copian uno a uno: el body no puede inyectar tenantId.
+
 export async function listar(tenantId, filtros = {}) {
-  const where = {
-    tenantId,
-  };
+	const where = { tenantId };
+	if (filtros.activo !== undefined) {
+		where.activo = filtros.activo;
+	}
+	if (filtros.nombre !== undefined) {
+		where.OR = [{ nombre: { contains: filtros.nombre } }, { identificacion: { contains: filtros.nombre } }];
+	}
+	return prisma.cliente.findMany({
+		where,
+		orderBy: { nombre: "asc" },
+	});
+}
 
-  if (filtros.nombre?.trim()) {
-    where.nombre = {
-      contains: filtros.nombre.trim(),
-    };
-  }
+export async function crear(tenantId, { nombre, identificacion, contacto }) {
+	return prisma.cliente.create({
+		data: { tenantId, nombre: nombre.trim(), identificacion, contacto },
+	});
+}
 
-  if (filtros.identificacion?.trim()) {
-    where.identificacion = {
-      contains: filtros.identificacion.trim(),
-    };
-  }
+export async function actualizar(tenantId, clienteId, cambios) {
+	const cliente = await prisma.cliente.findFirst({ where: { id: clienteId, tenantId } });
+	if (!cliente) {
+		throw new NotFoundError("Cliente no encontrado.");
+	}
 
-  return prisma.cliente.findMany({
-    where,
-    orderBy: {
-      nombre: "asc",
-    },
-  });
+	const { nombre, identificacion, contacto, activo } = cambios;
+	return prisma.cliente.update({
+		where: { id: clienteId },
+		data: {
+			...(nombre !== undefined ? { nombre: nombre.trim() } : {}),
+			...(identificacion !== undefined ? { identificacion } : {}),
+			...(contacto !== undefined ? { contacto } : {}),
+			...(activo !== undefined ? { activo } : {}),
+		},
+	});
 }

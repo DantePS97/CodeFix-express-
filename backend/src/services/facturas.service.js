@@ -1,181 +1,236 @@
-export async function anular(tenantId, facturaId, motivo) {
-  // 1. Buscar la factura dentro del negocio correspondiente
-  const facturaExistente = await prisma.factura.findFirst({
-    where: {
-      id: Number(facturaId),
-      tenantId,
-    },
-    include: {
-      detalles: true,
-    },
-  });
+import prisma from "../config/prisma.js";
+import { Prisma } from "../generated/prisma/client.ts";
+import { ConflictError, NotFoundError, ValidationError } from "../utils/errors.js";
 
-  if (!facturaExistente) {
-    throw new NotFoundError("La factura no existe.");
-  }
+// Todo método recibe tenantId como primer parámetro y lo aplica en la
+// consulta (DDS 5.3).
 
-  // 2. Validar que la factura se encuentre emitida
-  if (facturaExistente.estado !== "EMITIDA") {
-    throw new ConflictError(
-      "No se puede anular una factura que ya fue anulada.",
-      "TRANSICION_INVALIDA"
-    );
-  }
+const MAX_INTENTOS_NUMERO = 5;
 
-  // 3. Anular y devolver el inventario en una sola transacción
-  return await prisma.$transaction(async (tx) => {
-    // Comprobar nuevamente el estado para evitar una doble anulación
-    const factura = await tx.factura.findFirst({
-      where: {
-        id: facturaExistente.id,
-        tenantId,
-      },
-      include: {
-        detalles: true,
-      },
-    });
+const INCLUIR_DETALLE = {
+	cliente: true,
+	detalles: { include: { producto: { select: { id: true, nombre: true, codigo: true } } } },
+};
 
-    if (!factura) {
-      throw new NotFoundError("La factura no existe.");
-    }
-
-    if (factura.estado !== "EMITIDA") {
-      throw new ConflictError(
-        "No se puede anular una factura que ya fue anulada.",
-        "TRANSICION_INVALIDA"
-      );
-    }
-
-    // Cambiar el estado y guardar el motivo
-    const facturaAnulada = await tx.factura.update({
-      where: {
-        id: factura.id,
-      },
-      data: {
-        estado: "ANULADA",
-        motivoAnulacion: motivo?.trim() || null,
-      },
-    });
-
-    // Devolver al inventario los productos facturados
-    for (const detalle of factura.detalles) {
-      const producto = await tx.producto.findFirst({
-        where: {
-          id: detalle.productoId,
-          tenantId,
-        },
-      });
-
-      if (!producto) {
-        throw new NotFoundError(
-          `No se encontró el producto con ID ${detalle.productoId}.`
-        );
-      }
-
-      const cantidadDevuelta = detalle.cantidad;
-      const stockAnterior = producto.stockActual;
-      const stockPosterior = stockAnterior + cantidadDevuelta;
-
-      // Incrementar las existencias
-      await tx.producto.update({
-        where: {
-          id: producto.id,
-        },
-        data: {
-          stockActual: {
-            increment: cantidadDevuelta,
-          },
-        },
-      });
-
-      // Registrar el movimiento de entrada
-      await tx.movimientoInventario.create({
-        data: {
-          tenantId,
-          productoId: producto.id,
-          tipo: "ENTRADA",
-          cantidad: cantidadDevuelta,
-          stockAnterior,
-          stockPosterior,
-          referenciaFacturaId: factura.id,
-          usuarioId: factura.usuarioId,
-          fecha: new Date(),
-        },
-      });
-    }
-
-    return facturaAnulada;
-  });
+// Ventas simultáneas calculan el mismo número: la restricción única deja pasar una y las demás reintentan.
+export async function crear(tenantId, usuarioId, datos) {
+	for (let intento = 1; ; intento++) {
+		try {
+			return await emitir(tenantId, usuarioId, datos);
+		} catch (error) {
+			if (!esChoqueDeNumero(error)) {
+				throw error;
+			}
+			if (intento >= MAX_INTENTOS_NUMERO) {
+				throw new ConflictError(
+					"Otra factura se emitió al mismo tiempo. Intentá de nuevo.",
+					"NUMERO_FACTURA_DUPLICADO",
+				);
+			}
+		}
+	}
 }
-export async function listar(tenantId, filtros = {}) {
-  const { clienteId, estado, desde, hasta } = filtros;
 
-  const condiciones = [{ tenantId }];
+async function emitir(tenantId, usuarioId, { clienteId, lineas }) {
+	return prisma.$transaction(async (tx) => {
+		const cliente = await tx.cliente.findFirst({ where: { id: clienteId, tenantId } });
+		if (!cliente) {
+			throw new NotFoundError("Cliente no encontrado.");
+		}
+		if (!cliente.activo) {
+			throw new ValidationError("El cliente está inactivo.");
+		}
 
-  // Filtrar por cliente
-  if (clienteId !== undefined && clienteId !== "") {
-    const id = Number(clienteId);
+		const negocio = await tx.negocio.findUnique({ where: { id: tenantId } });
+		if (!negocio) {
+			throw new NotFoundError("Negocio no encontrado.");
+		}
 
-    if (!Number.isInteger(id) || id <= 0) {
-      throw new Error("El clienteId debe ser un entero positivo.");
-    }
+		// Orden fijo por productoId para tomar los locks de fila siempre en el mismo orden.
+		const lineasOrdenadas = [...lineas].sort((a, b) => a.productoId - b.productoId);
+		const detalles = [];
+		const movimientos = [];
 
-    condiciones.push({ clienteId: id });
-  }
+		for (const { productoId, cantidad } of lineasOrdenadas) {
+			const producto = await tx.producto.findFirst({ where: { id: productoId, tenantId } });
+			if (!producto) {
+				throw new NotFoundError(`Producto ${productoId} no encontrado.`);
+			}
+			if (!producto.activo) {
+				throw new ValidationError(`El producto "${producto.nombre}" está inactivo.`);
+			}
 
-  // Filtrar por estado
-  if (estado !== undefined && estado !== "") {
-    if (!["EMITIDA", "ANULADA"].includes(estado)) {
-      throw new Error("El estado de la factura no es válido.");
-    }
+			// Decremento condicional atómico: evita sobreventa entre ventas concurrentes.
+			const { count } = await tx.producto.updateMany({
+				where: { id: productoId, tenantId, stock: { gte: cantidad } },
+				data: { stock: { decrement: cantidad } },
+			});
+			if (count === 0) {
+				throw new ConflictError(
+					`El producto "${producto.nombre}" no tiene existencias suficientes (solicitado: ${cantidad}).`,
+					"STOCK_INSUFICIENTE",
+				);
+			}
 
-    condiciones.push({ estado });
-  }
+			// Se relee tras el UPDATE: la primera lectura puede estar desactualizada por ventas concurrentes.
+			const { stock: stockNuevo } = await tx.producto.findFirst({
+				where: { id: productoId, tenantId },
+				select: { stock: true },
+			});
 
-  // Filtrar desde una fecha
-  if (desde) {
-    const fechaDesde = new Date(`${desde}T00:00:00.000`);
+			const precioUnitario = producto.precio;
+			detalles.push({
+				productoId,
+				cantidad,
+				precioUnitario,
+				subtotalLinea: precioUnitario.mul(cantidad),
+			});
+			movimientos.push({
+				tenantId,
+				productoId,
+				tipo: "SALIDA",
+				cantidad,
+				stockAnterior: stockNuevo + cantidad,
+				stockNuevo,
+			});
+		}
 
-    if (Number.isNaN(fechaDesde.getTime())) {
-      throw new Error("La fecha desde no es válida.");
-    }
+		const subtotal = detalles.reduce((acc, d) => acc.add(d.subtotalLinea), new Prisma.Decimal(0));
+		const impuesto = subtotal
+			.mul(negocio.tarifaIvaDefault)
+			.div(100)
+			.toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
+		const total = subtotal.add(impuesto);
 
-    condiciones.push({
-      creadoEn: {
-        gte: fechaDesde,
-      },
-    });
-  }
+		const ultima = await tx.factura.findFirst({
+			where: { tenantId },
+			orderBy: { numero: "desc" },
+			select: { numero: true },
+		});
+		const numero = (ultima?.numero ?? 0) + 1;
 
-  // Filtrar hasta una fecha, incluyendo todo ese día
-  if (hasta) {
-    const fechaHasta = new Date(`${hasta}T23:59:59.999`);
+		const factura = await tx.factura.create({
+			data: {
+				tenantId,
+				numero,
+				clienteId,
+				usuarioId,
+				subtotal,
+				impuesto,
+				total,
+				detalles: { create: detalles },
+			},
+		});
 
-    if (Number.isNaN(fechaHasta.getTime())) {
-      throw new Error("La fecha hasta no es válida.");
-    }
+		await tx.movimientoInventario.createMany({
+			data: movimientos.map((m) => ({
+				...m,
+				motivo: `Venta - factura #${numero}`,
+				referenciaFacturaId: factura.id,
+			})),
+		});
 
-    condiciones.push({
-      creadoEn: {
-        lte: fechaHasta,
-      },
-    });
-  }
+		return tx.factura.findFirst({ where: { id: factura.id, tenantId }, include: INCLUIR_DETALLE });
+	});
+}
 
-  return prisma.factura.findMany({
-    where: {
-      AND: condiciones,
-    },
-    include: {
-      cliente: true,
-      detalles: {
-        include: {
-          producto: true,
-        },
-      },
-    },
-    orderBy: {
-      numero: "desc",
-    },
-  });
+export async function listar(tenantId, { clienteId, estado, desde, hastaExclusivo } = {}) {
+	const where = { tenantId };
+	if (clienteId !== undefined) {
+		where.clienteId = clienteId;
+	}
+	if (estado !== undefined) {
+		where.estado = estado;
+	}
+	if (desde !== undefined || hastaExclusivo !== undefined) {
+		where.createdAt = {
+			...(desde !== undefined ? { gte: desde } : {}),
+			...(hastaExclusivo !== undefined ? { lt: hastaExclusivo } : {}),
+		};
+	}
+	return prisma.factura.findMany({
+		where,
+		orderBy: { numero: "desc" },
+		include: { cliente: true },
+	});
+}
+
+export async function resumenVentas(tenantId, desde, hastaExclusivo) {
+	const { _sum, _count } = await prisma.factura.aggregate({
+		where: { tenantId, estado: "EMITIDA", createdAt: { gte: desde, lt: hastaExclusivo } },
+		_sum: { total: true },
+		_count: { _all: true },
+	});
+	return {
+		ventasPeriodo: _sum.total ?? new Prisma.Decimal(0),
+		facturasEmitidas: _count._all,
+	};
+}
+
+export async function anular(tenantId, facturaId, motivo) {
+	return prisma.$transaction(async (tx) => {
+		// Transición atómica: solo una de dos anulaciones simultáneas ve count 1.
+		const { count } = await tx.factura.updateMany({
+			where: { id: facturaId, tenantId, estado: "EMITIDA" },
+			data: { estado: "ANULADA", motivoAnulacion: motivo },
+		});
+		if (count === 0) {
+			const existente = await tx.factura.findFirst({ where: { id: facturaId, tenantId }, select: { id: true } });
+			if (!existente) {
+				throw new NotFoundError("Factura no encontrada.");
+			}
+			throw new ConflictError("La factura ya está anulada.", "TRANSICION_INVALIDA");
+		}
+
+		const { numero, detalles } = await tx.factura.findFirst({
+			where: { id: facturaId, tenantId },
+			select: { numero: true, detalles: { orderBy: { productoId: "asc" } } },
+		});
+
+		const movimientos = [];
+		for (const { productoId, cantidad } of detalles) {
+			// Se repone aunque el producto esté inactivo: el stock facturado debe volver.
+			await tx.producto.updateMany({
+				where: { id: productoId, tenantId },
+				data: { stock: { increment: cantidad } },
+			});
+			const { stock: stockNuevo } = await tx.producto.findFirst({
+				where: { id: productoId, tenantId },
+				select: { stock: true },
+			});
+			movimientos.push({
+				tenantId,
+				productoId,
+				tipo: "ENTRADA",
+				cantidad,
+				stockAnterior: stockNuevo - cantidad,
+				stockNuevo,
+				motivo: `Anulación - factura #${numero}`,
+				referenciaFacturaId: facturaId,
+			});
+		}
+		await tx.movimientoInventario.createMany({ data: movimientos });
+
+		return tx.factura.findFirst({ where: { id: facturaId, tenantId }, include: INCLUIR_DETALLE });
+	});
+}
+
+export async function obtenerPorId(tenantId, facturaId) {
+	const factura = await prisma.factura.findFirst({
+		where: { id: facturaId, tenantId },
+		include: INCLUIR_DETALLE,
+	});
+	if (!factura) {
+		throw new NotFoundError("Factura no encontrada.");
+	}
+	return factura;
+}
+
+// Con el adapter de MariaDB el nombre del índice viaja en meta.driverAdapterError, no en meta.target.
+function esChoqueDeNumero(error) {
+	if (error?.code !== "P2002") {
+		return false;
+	}
+	const indice = error.meta?.driverAdapterError?.cause?.constraint?.index ?? error.meta?.target;
+	return String(indice).includes("numero");
 }

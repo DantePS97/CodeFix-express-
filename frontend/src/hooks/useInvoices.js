@@ -1,60 +1,40 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  listarFacturas,
-  crearFactura,
-} from "../services/invoices.service";
+import { listarFacturas, crearFactura as crearFacturaService } from "../services/invoices.service.js";
 
-export default function useInvoices(filtrosIniciales = {}) {
-  const [facturas, setFacturas] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export const useInvoices = () => {
+	const [facturas, setFacturas] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState(null);
 
-  const cargarFacturas = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+	const cargarFacturas = useCallback(async (filtros = {}) => {
+		try {
+			setLoading(true);
+			setError(null);
 
-      const data = await listarFacturas(filtrosIniciales);
+			const data = await listarFacturas(filtros);
+			setFacturas(data);
+		} catch (err) {
+			setError(err);
+		} finally {
+			setLoading(false);
+		}
+	}, []);
 
-      setFacturas(data);
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Error al cargar facturas"
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [filtrosIniciales]);
+	const crearFactura = async (datos) => {
+		const factura = await crearFacturaService(datos);
+		await cargarFacturas();
+		return factura;
+	};
 
-  const crear = async (datos) => {
-    try {
-      setError(null);
+	useEffect(() => {
+		cargarFacturas();
+	}, [cargarFacturas]);
 
-      const facturaCreada = await crearFactura(datos);
-
-      await cargarFacturas();
-
-      return facturaCreada;
-    } catch (err) {
-      const mensaje =
-        err.response?.data?.message ||
-        "Error al crear factura";
-
-      setError(mensaje);
-      throw err;
-    }
-  };
-
-  useEffect(() => {
-    cargarFacturas();
-  }, [cargarFacturas]);
-
-  return {
-    facturas,
-    loading,
-    error,
-    crear,
-    recargar: cargarFacturas,
-  };
-}
+	return {
+		facturas,
+		loading,
+		error,
+		cargarFacturas,
+		crearFactura,
+	};
+};

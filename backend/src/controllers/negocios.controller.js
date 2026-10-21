@@ -1,6 +1,7 @@
 import { validarRegistroNegocio } from "../validators/negocios.validator.js";
 import {
 	registrarNegocioConAdmin,
+	obtenerNegocioActual,
 	NitDuplicadoError,
 	CorreoDuplicadoError,
 } from "../services/negocios.service.js";
@@ -34,5 +35,14 @@ export async function registrar(req, res) {
 		return res
 			.status(500)
 			.json({ error: { codigo: "ERROR_INTERNO", mensaje: "No se pudo registrar el negocio." } });
+	}
+}
+
+export async function obtenerActual(req, res, next) {
+	try {
+		const negocio = await obtenerNegocioActual(req.tenantId);
+		res.status(200).json({ negocio });
+	} catch (error) {
+		next(error);
 	}
 }
