@@ -1,51 +1,111 @@
 /* Compartido entre LoginPage y RegisterBusinessPage: ambas usan exactamente
-   el mismo diseño de formulario público. */
+   el mismo diseño de panel público (panel azul marino sobre fondo claro). */
 
 .auth-page {
 	min-height: 100vh;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--color-background);
+	padding: var(--spacing-lg) var(--spacing-md);
+	background:
+		radial-gradient(circle at 15% 10%, rgba(30, 99, 233, 0.12) 0, transparent 40%),
+		radial-gradient(circle at 90% 90%, rgba(73, 193, 15, 0.1) 0, transparent 35%),
+		var(--color-background);
 }
 
 .auth-form {
 	width: 100%;
-	max-width: 380px;
-	background: var(--color-white);
-	border: 1px solid var(--color-border);
-	border-radius: var(--radius-md);
-	padding: var(--spacing-xl);
+	max-width: 400px;
+	background: linear-gradient(170deg, var(--color-sidebar-bg-deep) 0%, var(--color-sidebar-bg) 100%);
+	color: var(--color-sidebar-text);
+	border-radius: 20px;
+	padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
+	box-shadow: 0 20px 50px rgba(0, 27, 78, 0.35);
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-md);
 }
 
-.auth-form h1 {
+.auth-brand {
+	display: flex;
+	justify-content: center;
+	margin-bottom: var(--spacing-xs);
+}
+
+.auth-heading {
+	text-align: center;
+	margin-bottom: var(--spacing-xs);
+}
+
+.auth-heading h1 {
+	margin: 0;
 	font-size: var(--font-size-xl);
-	color: var(--color-dark);
-	margin: 0 0 var(--spacing-sm);
+	color: var(--color-white);
+}
+
+.auth-heading p {
+	margin: var(--spacing-xs) 0 0;
+	font-size: var(--font-size-sm);
+	color: var(--color-sidebar-text);
+}
+
+/* Etiquetas e inputs sobre el panel oscuro. */
+.auth-form .form-field label {
+	color: var(--color-sidebar-text);
+}
+
+.auth-form .form-field-error {
+	color: #fecaca;
+}
+
+.auth-form .input {
+	border-color: transparent;
+}
+
+.auth-form .btn-primary {
+	margin-top: var(--spacing-xs);
+	padding-block: 0.75rem;
 }
 
 .auth-switch {
 	font-size: var(--font-size-sm);
 	text-align: center;
-	color: var(--color-text-secondary);
+	color: var(--color-sidebar-text);
+}
+
+.auth-switch a {
+	color: #8db8ff;
+	font-weight: var(--font-weight-semibold);
 }
 
 .auth-success {
 	text-align: center;
+	align-items: center;
 }
 
-.form-error {
-	color: var(--color-danger);
-	font-size: var(--font-size-sm);
+.auth-success h1 {
 	margin: 0;
+	font-size: var(--font-size-xl);
+	color: var(--color-white);
+}
+
+.auth-success a {
+	color: #8db8ff;
+	font-weight: var(--font-weight-semibold);
+}
+
+/* Error del formulario: caja suave legible sobre fondo oscuro. */
+.auth-form .form-error {
+	padding: var(--spacing-sm) var(--spacing-md);
+	border-radius: var(--radius-md);
+	background-color: rgba(220, 38, 38, 0.18);
+	border: 1px solid rgba(252, 165, 165, 0.45);
+	color: #fecaca;
+	font-size: var(--font-size-sm);
 }
 
 @media (max-width: 768px) {
 	.auth-form {
-		max-width: 100%;
-		margin: 0 var(--spacing-md);
+		padding: var(--spacing-lg) var(--spacing-md);
 	}
 }
