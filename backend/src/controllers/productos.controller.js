@@ -1,7 +1,7 @@
 import { validarCrearProducto, validarActualizarProducto } from "../validators/productos.validator.js";
 import { listar as listarProductos, crear as crearProducto, actualizar as actualizarProducto, listarAlertasStock } from "../services/productos.service.js";
 import { ValidationError } from "../utils/errors.js";
-import { leerBooleano, leerEnteroPositivo, leerTexto } from "../utils/query.js";
+import { leerBooleano, leerEnteroPositivo, leerIdRuta, leerTexto } from "../utils/query.js";
 
 export async function listar(req, res, next) {
 	try {
@@ -34,7 +34,7 @@ export async function actualizar(req, res, next) {
 		if (errores.length > 0) {
 			throw new ValidationError(errores.join(" "));
 		}
-		const productoId = Number(req.params.id);
+		const productoId = leerIdRuta(req.params.id, "Producto no encontrado.");
 		const producto = await actualizarProducto(req.tenantId, productoId, req.body);
 		res.status(200).json({ producto });
 	} catch (error) {
