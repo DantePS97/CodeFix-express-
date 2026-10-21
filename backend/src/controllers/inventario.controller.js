@@ -12,7 +12,7 @@ export async function registrar(req, res, next) {
 		// VENDEDOR solo puede registrar salidas (ventas); ENTRADA/AJUSTE son
 		// exclusivos de ADMIN (DDS 4.2).
 		if (req.user.rol === "VENDEDOR" && req.body.tipo !== "SALIDA") {
-			throw new ForbiddenError("Como VENDEDOR solo podés registrar salidas de inventario.");
+			throw new ForbiddenError("Como VENDEDOR solo puedes registrar salidas de inventario.");
 		}
 		const movimiento = await registrarMovimiento(req.tenantId, req.body);
 		res.status(201).json({ movimiento });

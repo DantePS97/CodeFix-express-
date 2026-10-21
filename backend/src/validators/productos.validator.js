@@ -49,7 +49,7 @@ export function validarActualizarProducto(body) {
 	const { nombre, descripcion, codigo, precio, stockMinimo, categoriaId, activo } = body ?? {};
 
 	if ([nombre, descripcion, codigo, precio, stockMinimo, categoriaId, activo].every((campo) => campo === undefined)) {
-		errores.push("Enviá al menos un campo para actualizar.");
+		errores.push("Envía al menos un campo para actualizar.");
 	}
 	if (nombre !== undefined && !esTexto(nombre, NOMBRE_MAX)) {
 		errores.push(MENSAJES.nombre);
