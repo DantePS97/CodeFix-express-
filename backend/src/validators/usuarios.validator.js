@@ -29,7 +29,7 @@ export function validarActualizarUsuario(body) {
 	const { rol, activo } = body ?? {};
 
 	if (rol === undefined && activo === undefined) {
-		errores.push("Debés enviar al menos 'rol' o 'activo' para actualizar.");
+		errores.push("Debes enviar al menos 'rol' o 'activo' para actualizar.");
 	}
 	if (rol !== undefined && !ROLES_VALIDOS.includes(rol)) {
 		errores.push(`El rol debe ser uno de: ${ROLES_VALIDOS.join(", ")}.`);

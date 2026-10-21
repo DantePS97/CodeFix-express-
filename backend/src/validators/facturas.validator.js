@@ -60,7 +60,7 @@ export function validarCrearFactura(body) {
 		if (!Number.isInteger(productoId) || productoId <= 0) {
 			errores.push(`Línea ${numeroLinea}: el producto es obligatorio.`);
 		} else if (productosVistos.has(productoId)) {
-			errores.push(`Línea ${numeroLinea}: el producto ${productoId} está repetido; agrupá la cantidad en una sola línea.`);
+			errores.push(`Línea ${numeroLinea}: el producto ${productoId} está repetido; agrupa la cantidad en una sola línea.`);
 		} else {
 			productosVistos.add(productoId);
 		}

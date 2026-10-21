@@ -56,17 +56,19 @@
 	padding: var(--spacing-lg);
 }
 
-/* Tablet: sidebar colapsado a solo iconos. Acotado a este rango (no <768px)
-   para no chocar con la regla de mobile de más abajo, que sí necesita el
-   texto visible en su layout horizontal. */
+/* Tablet: sidebar más angosto pero con las etiquetas visibles (los items aún
+   no tienen iconos, así que ocultar el texto los dejaría sin contenido).
+   Cuando existan iconos se podrá volver a colapsar a solo iconos con
+   --layout-sidebar-width-collapsed. Acotado a este rango (no <768px) para no
+   chocar con la regla de mobile de más abajo. */
 @media (max-width: 1024px) and (min-width: 769px) {
 	.app-sidebar {
-		width: var(--layout-sidebar-width-collapsed);
-		padding: var(--spacing-lg) var(--spacing-xs);
+		width: 176px;
+		padding: var(--spacing-lg) var(--spacing-sm);
 	}
 
-	.app-sidebar-item span {
-		display: none;
+	.app-sidebar-item {
+		padding: var(--spacing-sm);
 	}
 }
 

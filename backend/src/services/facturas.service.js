@@ -31,7 +31,7 @@ export async function crear(tenantId, usuarioId, datos) {
 			}
 			if (intento >= MAX_INTENTOS_NUMERO) {
 				throw new ConflictError(
-					"Otra factura se emitió al mismo tiempo. Intentá de nuevo.",
+					"Otra factura se emitió al mismo tiempo. Intenta de nuevo.",
 					"NUMERO_FACTURA_DUPLICADO",
 				);
 			}

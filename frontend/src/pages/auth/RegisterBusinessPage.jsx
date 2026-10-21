@@ -32,7 +32,7 @@ export default function RegisterBusinessPage() {
 
 		const faltaAlgunCampo = Object.values(form).some((valor) => !valor.trim());
 		if (faltaAlgunCampo) {
-			setError("Completá todos los campos.");
+			setError("Completa todos los campos.");
 			return;
 		}
 
@@ -60,7 +60,7 @@ export default function RegisterBusinessPage() {
 				<div className="auth-form auth-success">
 					<h1>¡Negocio registrado!</h1>
 					<p>
-						Ya podés iniciar sesión con el correo y la contraseña del
+						Ya puedes iniciar sesión con el correo y la contraseña del
 						administrador.
 					</p>
 					<Link to="/login">Ir a iniciar sesión</Link>
@@ -116,7 +116,7 @@ export default function RegisterBusinessPage() {
 				</Button>
 
 				<p className="auth-switch">
-					¿Ya tenés cuenta? <Link to="/login">Iniciar sesión</Link>
+					¿Ya tienes cuenta? <Link to="/login">Iniciar sesión</Link>
 				</p>
 			</form>
 		</div>

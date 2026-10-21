@@ -1,14 +1,26 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import Button from "../../components/Button/Button.jsx";
 import Input from "../../components/Input/Input.jsx";
 import { login } from "../../services/auth.service.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import "./Auth.css";
 
+// ProtectedRoute guarda en `location.state.from` la ruta que se pidió antes de
+// mandar al login. Solo se acepta una ruta interna que no sea del flujo público.
+function destinoPostLogin(from) {
+	const ruta = from?.pathname;
+	if (typeof ruta !== "string" || !ruta.startsWith("/") || ruta === "/login" || ruta === "/registro-negocio") {
+		return "/dashboard";
+	}
+	return `${ruta}${from.search ?? ""}${from.hash ?? ""}`;
+}
+
 export default function LoginPage() {
 	const { estaAutenticado, login: iniciarSesionEnContexto } = useAuth();
 	const navigate = useNavigate();
+	const location = useLocation();
+	const destino = destinoPostLogin(location.state?.from);
 	const [correo, setCorreo] = useState("");
 	const [contrasena, setContrasena] = useState("");
 	const [error, setError] = useState("");
@@ -19,7 +31,7 @@ export default function LoginPage() {
 		setError("");
 
 		if (!correo.trim() || !contrasena.trim()) {
-			setError("Completá correo y contraseña.");
+			setError("Completa correo y contraseña.");
 			return;
 		}
 
@@ -27,7 +39,7 @@ export default function LoginPage() {
 		try {
 			const data = await login({ correo, contrasena });
 			iniciarSesionEnContexto(data);
-			navigate("/dashboard", { replace: true });
+			navigate(destino, { replace: true });
 		} catch (err) {
 			const mensaje =
 				err.response?.data?.error?.mensaje ?? "No se pudo iniciar sesión.";
@@ -38,7 +50,7 @@ export default function LoginPage() {
 	}
 
 	if (estaAutenticado) {
-		return <Navigate to="/dashboard" replace />;
+		return <Navigate to={destino} replace />;
 	}
 
 	return (
@@ -70,8 +82,8 @@ export default function LoginPage() {
 				</Button>
 
 				<p className="auth-switch">
-					¿No tenés una cuenta?{" "}
-					<Link to="/registro-negocio">Registrá tu negocio</Link>
+					¿No tienes una cuenta?{" "}
+					<Link to="/registro-negocio">Registra tu negocio</Link>
 				</p>
 			</form>
 		</div>

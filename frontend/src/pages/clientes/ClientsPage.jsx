@@ -7,6 +7,7 @@ import Card from "../../components/Card/Card";
 import Modal from "../../components/Modal/Modal";
 import Button from "../../components/Button/Button";
 import Input from "../../components/Input/Input";
+import Badge from "../../components/Badge/Badge";
 
 import "./ClientsPage.css";
 
@@ -25,6 +26,7 @@ const ClientsPage = () => {
   const [clienteActual, setClienteActual] = useState(null);
   const [formulario, setFormulario] = useState(estadoInicial);
   const [errorForm, setErrorForm] = useState("");
+  const [errorAccion, setErrorAccion] = useState("");
 
   useEffect(() => {
     if (clienteActual) {
@@ -84,6 +86,18 @@ const ClientsPage = () => {
     }
   };
 
+  const alternarActivo = async (cliente) => {
+    setErrorAccion("");
+
+    try {
+      await actualizar(cliente.id, { activo: !cliente.activo });
+    } catch (err) {
+      setErrorAccion(
+        err.response?.data?.error?.mensaje ?? "No se pudo actualizar el estado del cliente.",
+      );
+    }
+  };
+
   const columnas = [
     {
       header: "Nombre",
@@ -98,11 +112,24 @@ const ClientsPage = () => {
       accessor: "contacto",
     },
     {
+      header: "Estado",
+      cell: (cliente) => (
+        <Badge variant={cliente.activo ? "success" : "neutral"}>
+          {cliente.activo ? "Activo" : "Inactivo"}
+        </Badge>
+      ),
+    },
+    {
       header: "Acciones",
       cell: (cliente) => (
-        <Button onClick={() => abrirEditar(cliente)}>
-          Editar
-        </Button>
+        <div className="clients-table-actions">
+          <Button variant="secondary" onClick={() => abrirEditar(cliente)}>
+            Editar
+          </Button>
+          <Button variant="secondary" onClick={() => alternarActivo(cliente)}>
+            {cliente.activo ? "Desactivar" : "Activar"}
+          </Button>
+        </div>
       ),
     },
   ];
@@ -133,6 +160,8 @@ const ClientsPage = () => {
             {error.response?.data?.error?.mensaje ?? "No se pudieron cargar los clientes."}
           </p>
         )}
+
+        {errorAccion && <p className="form-error">{errorAccion}</p>}
 
         {loading ? (
           <p>Cargando...</p>

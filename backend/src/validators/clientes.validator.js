@@ -30,7 +30,7 @@ export function validarActualizarCliente(body) {
 	const { nombre, identificacion, contacto, activo } = body ?? {};
 
 	if (nombre === undefined && identificacion === undefined && contacto === undefined && activo === undefined) {
-		errores.push("Debés enviar al menos un campo para actualizar.");
+		errores.push("Debes enviar al menos un campo para actualizar.");
 	}
 	if (nombre !== undefined) {
 		if (typeof nombre !== "string" || !nombre.trim()) {

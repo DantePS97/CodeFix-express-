@@ -15,6 +15,11 @@
   margin-bottom: 1rem;
 }
 
+.clients-table-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .clients-form {
   display: flex;
   flex-direction: column;
