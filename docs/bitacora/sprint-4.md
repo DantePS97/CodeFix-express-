@@ -60,3 +60,18 @@ Registro breve por sesión: lo planeado, lo completado y los bloqueos (Plan de T
 **Hallazgos fuera de alcance (no corregidos):**
 - Express 5 ignora `?incluirInactivos[]=true` (clave `incluirInactivos[]`), igual que los demás filtros: se usa el valor por defecto. Solo un parámetro repetido forma un array y da 400.
 - `incluirInactivos=` vacío se trata como ausente, igual que los otros helpers de `utils/query.js`.
+
+## Hardening — defectos de la pasada de QA sobre Sprint 1-4
+
+**Backend:**
+- `auth.middleware` es async y relee el usuario (`id`, `tenantId`, `rol`, `activo`) en cada request: usuario inexistente, inactivo o de otro negocio da 401 con el mismo mensaje; `req.user` sale de la base, así que el rol de la base gana al del token y un cambio de rol o una desactivación rigen de inmediato.
+- Movimientos de inventario atómicos: ENTRADA incrementa, SALIDA decrementa de forma condicional (409 `STOCK_INSUFICIENTE`) y AJUSTE toma `SELECT ... FOR UPDATE` para registrar un `stockAnterior` exacto. AJUSTE acepta 0; ENTRADA/SALIDA exigen 1..1.000.000 por movimiento y el stock no puede superar 1.000.000.000 (409 `STOCK_MAXIMO_EXCEDIDO`). `GET /inventario/movimientos` suma `producto { id, nombre, codigo }`.
+- Errores: JSON malformado o cuerpo no objeto -> 400 `VALIDACION`, cuerpo grande -> 413 `CUERPO_DEMASIADO_GRANDE`, ruta inexistente -> 404 `RUTA_NO_ENCONTRADA`, sin `x-powered-by`. `:id` inválido (`leerIdRuta` en `utils/query.js`) -> 404 en usuarios, productos, clientes y facturas.
+- Validación estricta (`utils/validacion.js`) en productos, inventario, negocios (`tarifaIvaDefault` 0..100, 2 decimales), usuarios, categorías y clientes: nada se redondea ni se convierte en silencio. PATCH de producto con código repetido -> 409 `CODIGO_DUPLICADO`. Una factura cuyo total desborda `Decimal(12,2)` -> 400 antes de tocar el stock.
+- Último ADMIN: `PATCH /usuarios/:id` bloquea todos los usuarios del negocio en una transacción y devuelve 409 `ULTIMO_ADMIN` si desactivar o cambiar el rol dejaría al negocio sin administradores activos. Dos administradores que se degradan mutuamente a la vez: 40 de 40 rondas con un 200 y un 409.
+
+**Frontend:** el modal de edición de productos envía nombre, código, precio, categoría y stock mínimo (el stock actual se muestra deshabilitado), precios con dos decimales, AJUSTE a 0 con cantidad obligatoria, historial con el nombre del producto aunque esté inactivo, sin GET de historial tras guardar como VENDEDOR e inputs de clientes con `id`/label.
+
+**Resultado (servidor real):** los guiones de QA pasaron de 52 fallos a 0 (aislamiento 33/33, Sprint 4 182/182); 113 verificaciones nuevas de endurecimiento en verde. Navegador (ADMIN, VENDEDOR, CONTADOR): edición, código duplicado, AJUSTE 0, historial, sesión desactivada enviada a `/login`, consola sin errores de JS. Datos de prueba eliminados y servidores detenidos.
+
+**Pendiente (sin corregir):** el frontend conserva el rol del login hasta el próximo inicio de sesión (el backend ya aplica el rol real); CORS abierto y demás hallazgos LOW; pantalla de Usuarios (Sprint 5).
